@@ -75,6 +75,19 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const getVideoDownloadUrl = (videoUrl: string) =>
+    `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
+
+  const triggerVideoDownload = (videoUrl: string) => {
+    const link = document.createElement("a");
+    link.href = getVideoDownloadUrl(videoUrl);
+    link.download = "betagen-video.mp4";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   const handleCreateVideo = async () => {
     if (!selectedFile) return;
     setIsLoading(true);
@@ -88,9 +101,13 @@ export default function Home() {
 
       const result = await createVideo(formData);
       if (result.success) {
-        setSuccessMessage("Đã gửi ảnh lên hệ thống, đang xử lý video");
-        if (!result.video_url) return;
+        if (!result.video_url) {
+          setErrorMessage("API đã xử lý xong nhưng chưa trả về link video.");
+          return;
+        }
+        triggerVideoDownload(result.video_url);
         setResultVideoUrl(result.video_url);
+        setSuccessMessage("Video đã tạo xong, trình duyệt đang tải video về thiết bị.");
       } else {
         console.error("[Create Video] API error response:", result);
         setErrorMessage(result.error || "Không thể tạo video. Vui lòng thử lại.");

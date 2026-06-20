@@ -6,6 +6,8 @@ interface ResultModalProps {
 }
 
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
+  const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="relative w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
@@ -22,9 +24,8 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
         </p>
         <div className="flex flex-col gap-3">
           <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={downloadUrl}
+            download="betagen-video.mp4"
             className="block w-full rounded-full bg-[#EA0029] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#c90024]"
           >
             Tải video

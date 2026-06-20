@@ -3,6 +3,37 @@ import { NextRequest, NextResponse } from "next/server";
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
+export const maxDuration = 180;
+
+function findVideoUrl(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const url = findVideoUrl(item);
+      if (url) return url;
+    }
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const resultUrls = record.resultUrls;
+
+  if (Array.isArray(resultUrls)) {
+    const videoUrl = resultUrls.find(
+      (item): item is string => typeof item === "string" && item.length > 0
+    );
+    if (videoUrl) return videoUrl;
+  }
+
+  for (const child of Object.values(record)) {
+    const url = findVideoUrl(child);
+    if (url) return url;
+  }
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -80,9 +111,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const n8nContentType = n8nResponse.headers.get("content-type") || "";
+    const n8nData = n8nContentType.includes("application/json")
+      ? await n8nResponse.json()
+      : await n8nResponse.text();
+    const videoUrl = findVideoUrl(n8nData);
+
+    if (!videoUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "n8n response is missing resultUrls[0]",
+          n8n_response: n8nData,
+        },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Image uploaded to n8n successfully",
+      message: "Video created successfully",
+      video_url: videoUrl,
+      n8n_response: n8nData,
     });
   } catch (error) {
     console.error("Error creating video:", error);
