@@ -117,8 +117,10 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const maxDesktopCanvasWidth = 2160;
+
     const updateCanvasScale = () => {
-      setCanvasScale(Math.min(window.innerWidth, 1440) / 1440);
+      setCanvasScale(Math.min(window.innerWidth, maxDesktopCanvasWidth) / 1440);
     };
 
     updateCanvasScale();

@@ -31,7 +31,7 @@ body {
 }
 
 .page-canvas {
-  width: min(100vw, 1440px);
+  width: min(100vw, calc(1440px * var(--canvas-scale)));
   margin: 0 auto;
   overflow: hidden;
   --canvas-scale: 1;
@@ -67,11 +67,11 @@ body {
   display: none;
 }
 
-  .responsive-section {
-    position: relative;
-    overflow: hidden;
-    padding: 24px;
-  }
+.responsive-section {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
 
 .responsive-section img {
   height: auto;
