@@ -466,9 +466,9 @@ body {
   }
 
   .responsive-hero-visual {
-    width: 132vw;
+    width: 112vw;
     max-width: none;
-    margin: 40px 0 0 -37vw;
+    margin: 36px 0 0 -4vw;
     transform: none;
   }
 
