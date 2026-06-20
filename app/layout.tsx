@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,13 +17,18 @@ export const metadata: Metadata = {
   description: "Tham gia chương trình VIVU Tốt Bụng của Betagen, tạo video cá nhân hóa và trúng quà cực mê!",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={geistSans.variable}>
+    <html lang="vi" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
