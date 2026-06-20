@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const N8N_TIMEOUT_MS = 290_000;
 
-export const maxDuration = 180;
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 function findVideoUrl(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
     const n8nResponse = await fetch(process.env.N8N_WEBHOOK_URL, {
       method: "POST",
       body: n8nFormData,
+      signal: AbortSignal.timeout(N8N_TIMEOUT_MS),
     });
 
     if (!n8nResponse.ok) {
@@ -136,6 +139,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error creating video:", error);
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      return NextResponse.json(
+        { success: false, error: "n8n webhook request timed out" },
+        { status: 504 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

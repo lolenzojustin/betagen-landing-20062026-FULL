@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const maxDuration = 180;
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 function getSafeFileName(videoUrl: URL) {
   const pathName = videoUrl.pathname.split("/").filter(Boolean).pop();
