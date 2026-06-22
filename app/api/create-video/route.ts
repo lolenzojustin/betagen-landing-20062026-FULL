@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 interface ImageFormat {
-  extension: "jpg" | "png" | "webp";
+  extension: "jpg" | "jpeg" | "png" | "webp";
   mimeType: "image/jpeg" | "image/png" | "image/webp";
 }
 
@@ -25,12 +25,36 @@ function getFileExtension(fileName: string) {
   return extension && extension !== fileName.toLowerCase() ? extension : "";
 }
 
+function getPreferredImageExtension(
+  file: File,
+  fallbackExtension: ImageFormat["extension"]
+) {
+  const extension = getFileExtension(file.name);
+
+  if (extension === "jpeg") {
+    return "jpeg";
+  }
+
+  if (extension === "jpg" || extension === "jfif") {
+    return "jpg";
+  }
+
+  if (extension === "png" || extension === "webp") {
+    return extension;
+  }
+
+  return fallbackExtension;
+}
+
 function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
   const fileType = file.type.toLowerCase();
   const extension = getFileExtension(file.name);
 
   if (["image/jpeg", "image/jpg", "image/pjpeg"].includes(fileType)) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
+    return {
+      extension: getPreferredImageExtension(file, "jpg"),
+      mimeType: "image/jpeg",
+    };
   }
 
   if (["image/png", "image/x-png"].includes(fileType)) {
@@ -42,7 +66,10 @@ function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
   }
 
   if (["jpg", "jpeg", "jfif"].includes(extension)) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
+    return {
+      extension: getPreferredImageExtension(file, "jpg"),
+      mimeType: "image/jpeg",
+    };
   }
 
   if (extension === "png") {
@@ -60,7 +87,10 @@ async function getImageFormat(file: File): Promise<ImageFormat | null> {
   const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
 
   if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
+    return {
+      extension: getPreferredImageExtension(file, "jpg"),
+      mimeType: "image/jpeg",
+    };
   }
 
   if (

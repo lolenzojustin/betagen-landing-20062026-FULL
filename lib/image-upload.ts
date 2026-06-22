@@ -1,5 +1,5 @@
 export const IMAGE_UPLOAD_ACCEPT =
-  ".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/jpg,image/png,image/webp";
+  ".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/jpg,image/pjpeg,image/png,image/webp";
 
 const ACCEPTED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".jfif", ".png", ".webp"];
 
