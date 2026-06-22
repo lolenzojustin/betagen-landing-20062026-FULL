@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
-
-interface ImageFormat {
-  extension: "jpg" | "png" | "webp";
-  mimeType: "image/jpeg" | "image/png" | "image/webp";
-}
+const ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "jfif", "png", "webp"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/x-png",
+  "image/webp",
+];
 
 export const runtime = "nodejs";
 
@@ -25,110 +29,14 @@ function getFileExtension(fileName: string) {
   return extension && extension !== fileName.toLowerCase() ? extension : "";
 }
 
-function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
+function isAllowedImage(file: File) {
   const fileType = file.type.toLowerCase();
   const extension = getFileExtension(file.name);
 
-  if (["image/jpeg", "image/jpg", "image/pjpeg"].includes(fileType)) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
-  }
-
-  if (["image/png", "image/x-png"].includes(fileType)) {
-    return { extension: "png", mimeType: "image/png" };
-  }
-
-  if (fileType === "image/webp") {
-    return { extension: "webp", mimeType: "image/webp" };
-  }
-
-  if (["jpg", "jpeg", "jfif"].includes(extension)) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
-  }
-
-  if (extension === "png") {
-    return { extension: "png", mimeType: "image/png" };
-  }
-
-  if (extension === "webp") {
-    return { extension: "webp", mimeType: "image/webp" };
-  }
-
-  return null;
-}
-
-async function getImageFormat(file: File): Promise<ImageFormat | null> {
-  const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
-
-  if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
-    return { extension: "jpg", mimeType: "image/jpeg" };
-  }
-
-  if (
-    header[0] === 0x89 &&
-    header[1] === 0x50 &&
-    header[2] === 0x4e &&
-    header[3] === 0x47
-  ) {
-    return { extension: "png", mimeType: "image/png" };
-  }
-
-  if (
-    header[0] === 0x52 &&
-    header[1] === 0x49 &&
-    header[2] === 0x46 &&
-    header[3] === 0x46 &&
-    header[8] === 0x57 &&
-    header[9] === 0x45 &&
-    header[10] === 0x42 &&
-    header[11] === 0x50
-  ) {
-    return { extension: "webp", mimeType: "image/webp" };
-  }
-
-  return getImageFormatFromTypeOrName(file);
-}
-
-async function buildN8nFormData(
-  formData: FormData,
-  image: File,
-  imageFormat: ImageFormat
-) {
-  const n8nFormData = new FormData();
-  let hasAppendedImage = false;
-  const appendNormalizedImage = async () => {
-    const baseFileName =
-      image.name
-        .replace(/(\.(?:jpe?g|jfif|png|webp))+$/i, "")
-        .replace(/[^a-zA-Z0-9._-]/g, "-") || "upload";
-    const normalizedFileName = `${baseFileName}.${imageFormat.extension}`;
-    const normalizedImage = new Blob([await image.arrayBuffer()], {
-      type: imageFormat.mimeType,
-    });
-
-    n8nFormData.append("image", normalizedImage, normalizedFileName);
-    n8nFormData.append("original_image_name", image.name);
-    n8nFormData.append("original_image_type", image.type || "");
-    n8nFormData.append("normalized_image_name", normalizedFileName);
-    n8nFormData.append("normalized_image_type", imageFormat.mimeType);
-    hasAppendedImage = true;
-  };
-
-  for (const [key, value] of formData.entries()) {
-    if (key === "image") {
-      if (!hasAppendedImage) {
-        await appendNormalizedImage();
-      }
-      continue;
-    }
-
-    n8nFormData.append(key, value);
-  }
-
-  if (!hasAppendedImage) {
-    await appendNormalizedImage();
-  }
-
-  return n8nFormData;
+  return (
+    ALLOWED_IMAGE_TYPES.includes(fileType) ||
+    ALLOWED_IMAGE_EXTENSIONS.includes(extension)
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -143,9 +51,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const imageFormat = await getImageFormat(imageEntry);
-
-    if (!imageFormat) {
+    if (!isAllowedImage(imageEntry)) {
       return NextResponse.json(
         {
           success: false,
@@ -169,15 +75,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const n8nFormData = await buildN8nFormData(
-      formData,
-      imageEntry,
-      imageFormat
-    );
-
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",
-      body: n8nFormData,
+      body: formData,
     });
 
     const n8nData = await readN8nResponse(n8nResponse);
