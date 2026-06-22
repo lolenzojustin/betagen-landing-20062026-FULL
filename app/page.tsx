@@ -17,11 +17,10 @@ import RuleSection from "@/components/RuleSection";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
 import { TEMPLATE_VIDEO_URL, TEMPLATE_ID } from "@/lib/constants";
-import { checkVideo, createVideo } from "@/lib/api";
+import { checkVideo, createVideo, uploadImageToFreeImage } from "@/lib/api";
 import {
   IMAGE_UPLOAD_ACCEPT,
   isAcceptedImageUpload,
-  normalizeImageUploadFile,
 } from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
@@ -100,7 +99,7 @@ export default function Home() {
     (file?: File | null) => {
       if (!file) return;
       if (!isAcceptedImageUpload(file)) return;
-      handleFileSelected(normalizeImageUploadFile(file));
+      handleFileSelected(file);
     },
     [handleFileSelected],
   );
@@ -204,12 +203,31 @@ export default function Home() {
     setSuccessMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append("image", selectedFile);
-      formData.append("template_id", TEMPLATE_ID);
-      formData.append("template_video_url", TEMPLATE_VIDEO_URL);
+      let imageUrl: string;
 
-      const result = await createVideo(formData);
+      try {
+        imageUrl = await uploadImageToFreeImage(selectedFile);
+      } catch (error) {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
+        console.error("[FreeImage Upload] Upload error:", error);
+        setErrorMessage("Không upload được ảnh, vui lòng thử lại.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requestIdRef.current !== requestId) {
+        return;
+      }
+
+      const result = await createVideo({
+        image_url: imageUrl,
+        original_file_name: selectedFile.name,
+        template_id: TEMPLATE_ID,
+        template_video_url: TEMPLATE_VIDEO_URL,
+      });
 
       if (requestIdRef.current !== requestId) {
         return;

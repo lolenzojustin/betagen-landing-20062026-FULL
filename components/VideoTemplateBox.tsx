@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   IMAGE_UPLOAD_ACCEPT,
   isAcceptedImageUpload,
-  normalizeImageUploadFile,
 } from "@/lib/image-upload";
 
 interface VideoTemplateBoxProps {
@@ -26,7 +25,7 @@ export default function VideoTemplateBox({
     if (!file) return;
     if (!isAcceptedImageUpload(file)) return;
 
-    onFileSelected(normalizeImageUploadFile(file));
+    onFileSelected(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {

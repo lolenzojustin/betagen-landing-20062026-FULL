@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
-const ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "jfif", "png", "webp"];
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/png",
-  "image/x-png",
-  "image/webp",
-];
-
 export const runtime = "nodejs";
+
+interface CreateVideoRequestBody {
+  image_url?: unknown;
+  original_file_name?: unknown;
+  template_id?: unknown;
+  template_video_url?: unknown;
+  [key: string]: unknown;
+}
 
 async function readN8nResponse(response: Response) {
   const contentType = response.headers.get("content-type") || "";
@@ -23,47 +20,18 @@ async function readN8nResponse(response: Response) {
   return response.text();
 }
 
-function getFileExtension(fileName: string) {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return extension && extension !== fileName.toLowerCase() ? extension : "";
-}
-
-function isAllowedImage(file: File) {
-  const fileType = file.type.toLowerCase();
-  const extension = getFileExtension(file.name);
-
-  return (
-    ALLOWED_IMAGE_TYPES.includes(fileType) ||
-    ALLOWED_IMAGE_EXTENSIONS.includes(extension)
-  );
+function getOptionalString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const imageEntry = formData.get("image");
+    const body = (await req.json()) as CreateVideoRequestBody;
+    const imageUrl = getOptionalString(body.image_url);
 
-    if (!(imageEntry instanceof File)) {
+    if (!imageUrl) {
       return NextResponse.json(
-        { success: false, error: "Missing image file" },
-        { status: 400 }
-      );
-    }
-
-    if (!isAllowedImage(imageEntry)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid image type. Only JPG, JPEG, PNG, and WebP are allowed.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (imageEntry.size > MAX_IMAGE_SIZE_BYTES) {
-      return NextResponse.json(
-        { success: false, error: "Image size exceeds 25MB limit." },
+        { success: false, error: "Missing image_url" },
         { status: 400 }
       );
     }
@@ -75,9 +43,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const n8nPayload = {
+      ...body,
+      image_url: imageUrl,
+      original_file_name: getOptionalString(body.original_file_name),
+      template_id: getOptionalString(body.template_id),
+      template_video_url: getOptionalString(body.template_video_url),
+    };
+
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(n8nPayload),
     });
 
     const n8nData = await readN8nResponse(n8nResponse);
