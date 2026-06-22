@@ -266,7 +266,7 @@ export default function Home() {
       <input
         ref={uploadInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={handleUploadInputChange}
       />

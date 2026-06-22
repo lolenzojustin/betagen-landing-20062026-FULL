@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/x-png",
+  "image/webp",
+];
+const ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "jfif", "png", "webp"];
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export const runtime = "nodejs";
@@ -15,6 +23,92 @@ async function readN8nResponse(response: Response) {
   return response.text();
 }
 
+function getFileExtension(fileName: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  return extension && extension !== fileName.toLowerCase() ? extension : "";
+}
+
+function getNormalizedImageMimeType(file: File) {
+  const fileType = file.type.toLowerCase();
+  const extension = getFileExtension(file.name);
+
+  if (["image/jpeg", "image/jpg", "image/pjpeg"].includes(fileType)) {
+    return "image/jpeg";
+  }
+
+  if (["image/png", "image/x-png"].includes(fileType)) {
+    return "image/png";
+  }
+
+  if (fileType === "image/webp") {
+    return "image/webp";
+  }
+
+  if (["jpg", "jpeg", "jfif"].includes(extension)) {
+    return "image/jpeg";
+  }
+
+  if (extension === "png") {
+    return "image/png";
+  }
+
+  if (extension === "webp") {
+    return "image/webp";
+  }
+
+  return null;
+}
+
+async function buildN8nFormData(formData: FormData, image: File) {
+  const n8nFormData = new FormData();
+  const normalizedMimeType = getNormalizedImageMimeType(image);
+  let hasAppendedImage = false;
+  const appendNormalizedImage = async () => {
+    const extension = getFileExtension(image.name);
+    const safeExtension = ALLOWED_IMAGE_EXTENSIONS.includes(extension)
+      ? extension
+      : normalizedMimeType === "image/png"
+      ? "png"
+      : normalizedMimeType === "image/webp"
+      ? "webp"
+      : "jpg";
+    const safeFileName =
+      image.name.replace(/[^a-zA-Z0-9._-]/g, "-") || `upload.${safeExtension}`;
+    const normalizedFileName = safeFileName.includes(".")
+      ? safeFileName
+      : `${safeFileName}.${safeExtension}`;
+
+    const normalizedImage = new File(
+      [await image.arrayBuffer()],
+      normalizedFileName,
+      {
+        type: normalizedMimeType || image.type || "image/jpeg",
+      }
+    );
+
+    n8nFormData.append("image", normalizedImage);
+    hasAppendedImage = true;
+  };
+
+  for (const [key, value] of formData.entries()) {
+    if (key === "image") {
+      if (!hasAppendedImage) {
+        await appendNormalizedImage();
+      }
+      continue;
+    }
+
+    n8nFormData.append(key, value);
+  }
+
+  if (!hasAppendedImage) {
+    await appendNormalizedImage();
+  }
+
+  return n8nFormData;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -27,11 +121,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!ALLOWED_IMAGE_TYPES.includes(imageEntry.type)) {
+    const normalizedMimeType = getNormalizedImageMimeType(imageEntry);
+
+    if (
+      !normalizedMimeType ||
+      (imageEntry.type &&
+        !ALLOWED_IMAGE_TYPES.includes(imageEntry.type.toLowerCase()))
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid image type. Only JPEG, PNG, and WebP are allowed.",
+          error: "Invalid image type. Only JPG, JPEG, PNG, and WebP are allowed.",
         },
         { status: 400 }
       );
@@ -51,9 +151,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const n8nFormData = await buildN8nFormData(formData, imageEntry);
+
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",
-      body: formData,
+      body: n8nFormData,
     });
 
     const n8nData = await readN8nResponse(n8nResponse);

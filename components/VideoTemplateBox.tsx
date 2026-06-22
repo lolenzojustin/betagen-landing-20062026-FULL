@@ -68,7 +68,7 @@ export default function VideoTemplateBox({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={handleChange}
       />
