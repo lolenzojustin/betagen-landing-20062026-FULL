@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
 
 interface ImageFormat {
   extension: "jpg" | "png" | "webp";
@@ -106,6 +106,10 @@ async function buildN8nFormData(
     });
 
     n8nFormData.append("image", normalizedImage, normalizedFileName);
+    n8nFormData.append("original_image_name", image.name);
+    n8nFormData.append("original_image_type", image.type || "");
+    n8nFormData.append("normalized_image_name", normalizedFileName);
+    n8nFormData.append("normalized_image_type", imageFormat.mimeType);
     hasAppendedImage = true;
   };
 
@@ -153,7 +157,7 @@ export async function POST(req: NextRequest) {
 
     if (imageEntry.size > MAX_IMAGE_SIZE_BYTES) {
       return NextResponse.json(
-        { success: false, error: "Image size exceeds 10MB limit." },
+        { success: false, error: "Image size exceeds 25MB limit." },
         { status: 400 }
       );
     }

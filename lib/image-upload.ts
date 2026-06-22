@@ -16,3 +16,23 @@ export function isAcceptedImageUpload(file: Pick<File, "name" | "type">) {
     fileName.endsWith(extension)
   );
 }
+
+export function normalizeImageUploadFile(file: File) {
+  const fileName = file.name.toLowerCase();
+  const shouldNormalizeToJpg =
+    fileName.endsWith(".jpeg") ||
+    fileName.endsWith(".jfif") ||
+    file.type.toLowerCase() === "image/pjpeg";
+
+  if (!shouldNormalizeToJpg) {
+    return file;
+  }
+
+  const normalizedName =
+    file.name.replace(/(\.(?:jpeg|jfif))+$/i, "") || "upload";
+
+  return new File([file], `${normalizedName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: file.lastModified,
+  });
+}

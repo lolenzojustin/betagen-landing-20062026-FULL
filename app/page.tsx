@@ -18,7 +18,11 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
 import { TEMPLATE_VIDEO_URL, TEMPLATE_ID } from "@/lib/constants";
 import { checkVideo, createVideo } from "@/lib/api";
-import { IMAGE_UPLOAD_ACCEPT, isAcceptedImageUpload } from "@/lib/image-upload";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  isAcceptedImageUpload,
+  normalizeImageUploadFile,
+} from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 10_000;
@@ -96,7 +100,7 @@ export default function Home() {
     (file?: File | null) => {
       if (!file) return;
       if (!isAcceptedImageUpload(file)) return;
-      handleFileSelected(file);
+      handleFileSelected(normalizeImageUploadFile(file));
     },
     [handleFileSelected],
   );
