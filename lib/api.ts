@@ -1,5 +1,3 @@
-const FREEIMAGE_UPLOAD_URL = "https://freeimage.host/api/1/upload";
-
 export type VideoTaskStatus = "processing" | "done" | "error";
 
 export interface VideoTaskResponse {
@@ -20,68 +18,28 @@ export interface CreateVideoPayload {
 }
 
 interface FreeImageUploadResponse {
-  status_code?: number;
-  success?: {
-    code?: number;
-    message?: string;
-  };
-  data?: {
-    image?: {
-      url?: string;
-      display_url?: string;
-      url_viewer?: string;
-    };
-  };
-  image?: {
-    url?: string;
-    display_url?: string;
-    url_viewer?: string;
-  };
-  error?: {
-    code?: number;
-    message?: string;
-  };
+  success: boolean;
+  image_url?: string;
+  error?: string;
   [key: string]: unknown;
 }
 
-function getFreeImageUrl(response: FreeImageUploadResponse) {
-  return (
-    response.data?.image?.url ||
-    response.data?.image?.display_url ||
-    response.data?.image?.url_viewer ||
-    response.image?.url ||
-    response.image?.display_url ||
-    response.image?.url_viewer ||
-    null
-  );
-}
-
 export async function uploadImageToFreeImage(file: File): Promise<string> {
-  const apiKey = process.env.NEXT_PUBLIC_FREEIMAGE_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("FreeImage API key is not configured.");
-  }
-
   const formData = new FormData();
-  formData.append("key", apiKey);
-  formData.append("action", "upload");
-  formData.append("format", "json");
   formData.append("source", file);
 
-  const res = await fetch(FREEIMAGE_UPLOAD_URL, {
+  const res = await fetch("/api/upload-image", {
     method: "POST",
     body: formData,
   });
 
   const data = (await res.json()) as FreeImageUploadResponse;
-  const imageUrl = getFreeImageUrl(data);
 
-  if (!res.ok || !imageUrl) {
-    throw new Error(data.error?.message || "Unable to upload image.");
+  if (!res.ok || !data.success || !data.image_url) {
+    throw new Error(data.error || "Unable to upload image.");
   }
 
-  return imageUrl;
+  return data.image_url;
 }
 
 export async function createVideo(

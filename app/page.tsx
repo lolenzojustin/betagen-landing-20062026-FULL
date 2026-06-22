@@ -16,7 +16,7 @@ import NoteSection from "@/components/NoteSection";
 import RuleSection from "@/components/RuleSection";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
-import { TEMPLATE_VIDEO_URL, TEMPLATE_ID } from "@/lib/constants";
+import { TEMPLATE_VIDEO_URL } from "@/lib/constants";
 import { checkVideo, createVideo, uploadImageToFreeImage } from "@/lib/api";
 import {
   IMAGE_UPLOAD_ACCEPT,
@@ -207,6 +207,7 @@ export default function Home() {
 
       try {
         imageUrl = await uploadImageToFreeImage(selectedFile);
+        console.log("uploaded image_url", imageUrl);
       } catch (error) {
         if (requestIdRef.current !== requestId) {
           return;
@@ -224,10 +225,8 @@ export default function Home() {
 
       const result = await createVideo({
         image_url: imageUrl,
-        original_file_name: selectedFile.name,
-        template_id: TEMPLATE_ID,
-        template_video_url: TEMPLATE_VIDEO_URL,
       });
+      console.log("n8n create response", result);
 
       if (requestIdRef.current !== requestId) {
         return;

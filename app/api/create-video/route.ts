@@ -4,9 +4,6 @@ export const runtime = "nodejs";
 
 interface CreateVideoRequestBody {
   image_url?: unknown;
-  original_file_name?: unknown;
-  template_id?: unknown;
-  template_video_url?: unknown;
   [key: string]: unknown;
 }
 
@@ -43,20 +40,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const n8nPayload = {
-      ...body,
-      image_url: imageUrl,
-      original_file_name: getOptionalString(body.original_file_name),
-      template_id: getOptionalString(body.template_id),
-      template_video_url: getOptionalString(body.template_video_url),
-    };
-
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(n8nPayload),
+      body: JSON.stringify({ image_url: imageUrl }),
     });
 
     const n8nData = await readN8nResponse(n8nResponse);
