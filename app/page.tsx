@@ -17,7 +17,26 @@ import RuleSection from "@/components/RuleSection";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
 import { TEMPLATE_VIDEO_URL, TEMPLATE_ID } from "@/lib/constants";
-import { createVideo } from "@/lib/api";
+import { checkVideo, createVideo } from "@/lib/api";
+
+const INITIAL_POLLING_DELAY_MS = 100_000;
+const POLLING_INTERVAL_MS = 10_000;
+const MAX_POLLING_ATTEMPTS = 20;
+
+function waitForNextPoll(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = window.setTimeout(resolve, ms);
+
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timeoutId);
+        reject(signal.reason);
+      },
+      { once: true }
+    );
+  });
+}
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,6 +47,8 @@ export default function Home() {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const videoSectionRef = useRef<HTMLElement>(null);
   const responsiveVideoSectionRef = useRef<HTMLElement>(null);
+  const pollingAbortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -40,17 +61,35 @@ export default function Home() {
     };
   }, [selectedImage]);
 
-  const handleFileSelected = useCallback((file: File) => {
-    setSelectedFile(file);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setSelectedImage((prev) => {
-      if (prev && prev.startsWith("blob:")) {
-        URL.revokeObjectURL(prev);
-      }
-      return URL.createObjectURL(file);
-    });
+  const stopPolling = useCallback(() => {
+    if (pollingAbortRef.current) {
+      pollingAbortRef.current.abort();
+      pollingAbortRef.current = null;
+    }
   }, []);
+
+  useEffect(() => {
+    return () => stopPolling();
+  }, [stopPolling]);
+
+  const handleFileSelected = useCallback(
+    (file: File) => {
+      stopPolling();
+      requestIdRef.current += 1;
+      setIsLoading(false);
+      setResultVideoUrl(null);
+      setSelectedFile(file);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setSelectedImage((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return URL.createObjectURL(file);
+      });
+    },
+    [stopPolling]
+  );
 
   const handleUploadFile = useCallback(
     (file?: File | null) => {
@@ -88,11 +127,77 @@ export default function Home() {
     link.remove();
   };
 
+  const pollVideoResult = async (taskId: string) => {
+    stopPolling();
+
+    const controller = new AbortController();
+    pollingAbortRef.current = controller;
+
+    try {
+      for (let attempt = 0; attempt < MAX_POLLING_ATTEMPTS; attempt += 1) {
+        await waitForNextPoll(
+          attempt === 0 ? INITIAL_POLLING_DELAY_MS : POLLING_INTERVAL_MS,
+          controller.signal
+        );
+
+        const result = await checkVideo(taskId, controller.signal);
+
+        if (result.status === "processing") {
+          continue;
+        }
+
+        if (result.success && result.status === "done") {
+          if (!result.video_url) {
+            setErrorMessage("API đã xử lý xong nhưng chưa trả về link video.");
+            return;
+          }
+
+          triggerVideoDownload(result.video_url);
+          setResultVideoUrl(result.video_url);
+          setSuccessMessage(
+            "Video đã tạo xong, trình duyệt đang tải video về thiết bị."
+          );
+          return;
+        }
+
+        if (!result.success || result.status === "error") {
+          setErrorMessage(
+            result.error || "Không thể tạo video. Vui lòng thử lại."
+          );
+          return;
+        }
+
+        setErrorMessage("Trạng thái video không hợp lệ. Vui lòng thử lại.");
+        return;
+      }
+
+      setErrorMessage("Không tạo được video, vui lòng thử lại.");
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      console.error("[Check Video] Connection/Network error:", error);
+      setErrorMessage("Đã xảy ra lỗi kết nối với API.");
+    } finally {
+      if (!controller.signal.aborted && pollingAbortRef.current === controller) {
+        pollingAbortRef.current = null;
+        setIsLoading(false);
+      }
+    }
+  };
+
   const handleCreateVideo = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || isLoading) return;
+
+    stopPolling();
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setIsLoading(true);
+    setResultVideoUrl(null);
     setErrorMessage(null);
     setSuccessMessage(null);
+
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
@@ -100,22 +205,32 @@ export default function Home() {
       formData.append("template_video_url", TEMPLATE_VIDEO_URL);
 
       const result = await createVideo(formData);
+
+      if (requestIdRef.current !== requestId) {
+        return;
+      }
+
       if (result.success) {
-        if (!result.video_url) {
-          setErrorMessage("API đã xử lý xong nhưng chưa trả về link video.");
+        if (!result.task_id) {
+          setErrorMessage("API tạo task thành công nhưng chưa trả về task_id.");
+          setIsLoading(false);
           return;
         }
-        triggerVideoDownload(result.video_url);
-        setResultVideoUrl(result.video_url);
-        setSuccessMessage("Video đã tạo xong, trình duyệt đang tải video về thiết bị.");
-      } else {
-        console.error("[Create Video] API error response:", result);
-        setErrorMessage(result.error || "Không thể tạo video. Vui lòng thử lại.");
+
+        void pollVideoResult(result.task_id);
+        return;
       }
+
+      console.error("[Create Video] API error response:", result);
+      setErrorMessage(result.error || "Không thể tạo video. Vui lòng thử lại.");
+      setIsLoading(false);
     } catch (error) {
+      if (requestIdRef.current !== requestId) {
+        return;
+      }
+
       console.error("[Create Video] Connection/Network error:", error);
       setErrorMessage("Đã xảy ra lỗi kết nối với API.");
-    } finally {
       setIsLoading(false);
     }
   };
