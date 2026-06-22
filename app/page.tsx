@@ -18,6 +18,7 @@ import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
 import { TEMPLATE_VIDEO_URL, TEMPLATE_ID } from "@/lib/constants";
 import { checkVideo, createVideo } from "@/lib/api";
+import { IMAGE_UPLOAD_ACCEPT, isAcceptedImageUpload } from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 10_000;
@@ -94,7 +95,7 @@ export default function Home() {
   const handleUploadFile = useCallback(
     (file?: File | null) => {
       if (!file) return;
-      if (file.type && !file.type.startsWith("image/")) return;
+      if (!isAcceptedImageUpload(file)) return;
       handleFileSelected(file);
     },
     [handleFileSelected],
@@ -266,7 +267,7 @@ export default function Home() {
       <input
         ref={uploadInputRef}
         type="file"
-        accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp"
+        accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
         onChange={handleUploadInputChange}
       />

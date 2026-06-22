@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/png",
-  "image/x-png",
-  "image/webp",
-];
-const ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "jfif", "png", "webp"];
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
+interface ImageFormat {
+  extension: "jpg" | "png" | "webp";
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
+}
 
 export const runtime = "nodejs";
 
@@ -29,65 +25,87 @@ function getFileExtension(fileName: string) {
   return extension && extension !== fileName.toLowerCase() ? extension : "";
 }
 
-function getNormalizedImageMimeType(file: File) {
+function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
   const fileType = file.type.toLowerCase();
   const extension = getFileExtension(file.name);
 
   if (["image/jpeg", "image/jpg", "image/pjpeg"].includes(fileType)) {
-    return "image/jpeg";
+    return { extension: "jpg", mimeType: "image/jpeg" };
   }
 
   if (["image/png", "image/x-png"].includes(fileType)) {
-    return "image/png";
+    return { extension: "png", mimeType: "image/png" };
   }
 
   if (fileType === "image/webp") {
-    return "image/webp";
+    return { extension: "webp", mimeType: "image/webp" };
   }
 
   if (["jpg", "jpeg", "jfif"].includes(extension)) {
-    return "image/jpeg";
+    return { extension: "jpg", mimeType: "image/jpeg" };
   }
 
   if (extension === "png") {
-    return "image/png";
+    return { extension: "png", mimeType: "image/png" };
   }
 
   if (extension === "webp") {
-    return "image/webp";
+    return { extension: "webp", mimeType: "image/webp" };
   }
 
   return null;
 }
 
-async function buildN8nFormData(formData: FormData, image: File) {
+async function getImageFormat(file: File): Promise<ImageFormat | null> {
+  const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+
+  if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+    return { extension: "jpg", mimeType: "image/jpeg" };
+  }
+
+  if (
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47
+  ) {
+    return { extension: "png", mimeType: "image/png" };
+  }
+
+  if (
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50
+  ) {
+    return { extension: "webp", mimeType: "image/webp" };
+  }
+
+  return getImageFormatFromTypeOrName(file);
+}
+
+async function buildN8nFormData(
+  formData: FormData,
+  image: File,
+  imageFormat: ImageFormat
+) {
   const n8nFormData = new FormData();
-  const normalizedMimeType = getNormalizedImageMimeType(image);
   let hasAppendedImage = false;
   const appendNormalizedImage = async () => {
-    const extension = getFileExtension(image.name);
-    const safeExtension = ALLOWED_IMAGE_EXTENSIONS.includes(extension)
-      ? extension
-      : normalizedMimeType === "image/png"
-      ? "png"
-      : normalizedMimeType === "image/webp"
-      ? "webp"
-      : "jpg";
-    const safeFileName =
-      image.name.replace(/[^a-zA-Z0-9._-]/g, "-") || `upload.${safeExtension}`;
-    const normalizedFileName = safeFileName.includes(".")
-      ? safeFileName
-      : `${safeFileName}.${safeExtension}`;
+    const baseFileName =
+      image.name
+        .replace(/\.[^.]+$/, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "-") || "upload";
+    const normalizedFileName = `${baseFileName}.${imageFormat.extension}`;
+    const normalizedImage = new Blob([await image.arrayBuffer()], {
+      type: imageFormat.mimeType,
+    });
 
-    const normalizedImage = new File(
-      [await image.arrayBuffer()],
-      normalizedFileName,
-      {
-        type: normalizedMimeType || image.type || "image/jpeg",
-      }
-    );
-
-    n8nFormData.append("image", normalizedImage);
+    n8nFormData.append("image", normalizedImage, normalizedFileName);
     hasAppendedImage = true;
   };
 
@@ -121,13 +139,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const normalizedMimeType = getNormalizedImageMimeType(imageEntry);
+    const imageFormat = await getImageFormat(imageEntry);
 
-    if (
-      !normalizedMimeType ||
-      (imageEntry.type &&
-        !ALLOWED_IMAGE_TYPES.includes(imageEntry.type.toLowerCase()))
-    ) {
+    if (!imageFormat) {
       return NextResponse.json(
         {
           success: false,
@@ -151,7 +165,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const n8nFormData = await buildN8nFormData(formData, imageEntry);
+    const n8nFormData = await buildN8nFormData(
+      formData,
+      imageEntry,
+      imageFormat
+    );
 
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",

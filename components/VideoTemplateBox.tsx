@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { IMAGE_UPLOAD_ACCEPT, isAcceptedImageUpload } from "@/lib/image-upload";
 
 interface VideoTemplateBoxProps {
   templateVideoUrl: string;
@@ -19,7 +20,7 @@ export default function VideoTemplateBox({
 
   const handleFile = (file?: File | null) => {
     if (!file) return;
-    if (file.type && !file.type.startsWith("image/")) return;
+    if (!isAcceptedImageUpload(file)) return;
 
     onFileSelected(file);
   };
@@ -68,7 +69,7 @@ export default function VideoTemplateBox({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp"
+        accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
         onChange={handleChange}
       />
