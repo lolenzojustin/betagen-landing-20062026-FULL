@@ -4,7 +4,7 @@ const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
 
 interface ImageFormat {
   extension: "jpg" | "png" | "webp";
-  mimeType: "image/jpg" | "image/png" | "image/webp";
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
 }
 
 export const runtime = "nodejs";
@@ -30,7 +30,7 @@ function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
   const extension = getFileExtension(file.name);
 
   if (["image/jpeg", "image/jpg", "image/pjpeg"].includes(fileType)) {
-    return { extension: "jpg", mimeType: "image/jpg" };
+    return { extension: "jpg", mimeType: "image/jpeg" };
   }
 
   if (["image/png", "image/x-png"].includes(fileType)) {
@@ -42,7 +42,7 @@ function getImageFormatFromTypeOrName(file: File): ImageFormat | null {
   }
 
   if (["jpg", "jpeg", "jfif"].includes(extension)) {
-    return { extension: "jpg", mimeType: "image/jpg" };
+    return { extension: "jpg", mimeType: "image/jpeg" };
   }
 
   if (extension === "png") {
@@ -60,7 +60,7 @@ async function getImageFormat(file: File): Promise<ImageFormat | null> {
   const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
 
   if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
-    return { extension: "jpg", mimeType: "image/jpg" };
+    return { extension: "jpg", mimeType: "image/jpeg" };
   }
 
   if (
