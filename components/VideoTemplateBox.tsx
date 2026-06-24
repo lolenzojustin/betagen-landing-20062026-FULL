@@ -19,7 +19,10 @@ export default function VideoTemplateBox({
   previewUrl,
 }: VideoTemplateBoxProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [activatedVideoUrl, setActivatedVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasActivatedVideo = !previewUrl && activatedVideoUrl === templateVideoUrl;
 
   const handleFile = (file?: File | null) => {
     if (!file) return;
@@ -48,13 +51,44 @@ export default function VideoTemplateBox({
     e.target.value = "";
   };
 
-  const handleBoxClick = () => fileInputRef.current?.click();
+  const activateVideoWithSound = async () => {
+    const video = videoRef.current;
+    if (!video || hasActivatedVideo) return;
+
+    video.muted = false;
+    video.volume = 1;
+    setActivatedVideoUrl(templateVideoUrl);
+
+    try {
+      await video.play();
+    } catch {
+      video.muted = true;
+      setActivatedVideoUrl(null);
+    }
+  };
+
+  const handleBoxClick = () => {
+    if (previewUrl) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    void activateVideoWithSound();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    handleBoxClick();
+  };
 
   return (
     <div
       className={`
-        relative cursor-pointer overflow-hidden rounded-2xl
+        relative overflow-hidden rounded-2xl
         transition-all duration-200
+        ${!previewUrl && hasActivatedVideo ? "cursor-default" : "cursor-pointer"}
         ${isDragging ? "scale-[1.02] border-[#EA0029]" : ""}
       `}
       style={{
@@ -68,6 +102,10 @@ export default function VideoTemplateBox({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onClick={handleBoxClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={previewUrl ? "Chọn lại hình ảnh" : "Phát video có âm thanh"}
     >
       <input
         ref={fileInputRef}
@@ -88,11 +126,13 @@ export default function VideoTemplateBox({
         />
       ) : (
         <video
+          ref={videoRef}
           src={templateVideoUrl}
           autoPlay
           loop
-          muted
+          muted={!hasActivatedVideo}
           playsInline
+          controls={hasActivatedVideo}
           className="absolute inset-0 h-full w-full object-cover"
         />
       )}
