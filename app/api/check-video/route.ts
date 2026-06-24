@@ -13,7 +13,9 @@ async function readN8nResponse(response: Response) {
 }
 
 export async function GET(req: NextRequest) {
-  const taskId = req.nextUrl.searchParams.get("task_id");
+  const taskId =
+    req.nextUrl.searchParams.get("task_id") ||
+    req.nextUrl.searchParams.get("request_id");
 
   if (!taskId) {
     return NextResponse.json(
@@ -30,10 +32,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const webhookUrl = new URL(process.env.N8N_CHECK_VIDEO_WEBHOOK);
-    webhookUrl.searchParams.set("task_id", taskId);
-
-    const n8nResponse = await fetch(webhookUrl, {
+    const n8nResponse = await fetch(process.env.N8N_CHECK_VIDEO_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ request_id: taskId }),
       cache: "no-store",
     });
     const n8nData = await readN8nResponse(n8nResponse);

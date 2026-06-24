@@ -1,9 +1,7 @@
-export type VideoTaskStatus = "processing" | "done" | "error";
-
 export interface VideoTaskResponse {
   success: boolean;
   task_id?: string;
-  status?: VideoTaskStatus;
+  status?: string;
   video_url?: string;
   error?: string;
   n8n_response?: unknown;

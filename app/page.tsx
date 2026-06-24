@@ -146,16 +146,10 @@ export default function Home() {
 
         const result = await checkVideo(taskId, controller.signal);
 
-        if (result.status === "processing") {
-          continue;
-        }
+        const status =
+          typeof result.status === "string" ? result.status.toUpperCase() : "";
 
-        if (result.success && result.status === "done") {
-          if (!result.video_url) {
-            setErrorMessage("API đã xử lý xong nhưng chưa trả về link video.");
-            return;
-          }
-
+        if (status === "COMPLETED" && result.video_url) {
           triggerVideoDownload(result.video_url);
           setResultVideoUrl(result.video_url);
           setSuccessMessage(
@@ -164,15 +158,12 @@ export default function Home() {
           return;
         }
 
-        if (!result.success || result.status === "error") {
+        if (status === "ERROR" || result.success === false) {
           setErrorMessage(
             result.error || "Không thể tạo video. Vui lòng thử lại."
           );
           return;
         }
-
-        setErrorMessage("Trạng thái video không hợp lệ. Vui lòng thử lại.");
-        return;
       }
 
       setErrorMessage("Không tạo được video, vui lòng thử lại.");
@@ -232,19 +223,19 @@ export default function Home() {
         return;
       }
 
-      if (result.success) {
-        if (!result.task_id) {
-          setErrorMessage("API tạo task thành công nhưng chưa trả về task_id.");
-          setIsLoading(false);
-          return;
-        }
+      const taskId =
+        result.task_id ||
+        (typeof result.request_id === "string" ? result.request_id : undefined);
 
-        void pollVideoResult(result.task_id);
+      if (taskId) {
+        void pollVideoResult(taskId);
         return;
       }
 
       console.error("[Create Video] API error response:", result);
-      setErrorMessage(result.error || "Không thể tạo video. Vui lòng thử lại.");
+      setErrorMessage(
+        result.error || "API tạo task thành công nhưng chưa trả về request_id."
+      );
       setIsLoading(false);
     } catch (error) {
       if (requestIdRef.current !== requestId) {

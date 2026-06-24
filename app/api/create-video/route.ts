@@ -21,6 +21,10 @@ function getOptionalString(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as CreateVideoRequestBody;
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ image_url: imageUrl }),
+      body: JSON.stringify({ ...body, image_url: imageUrl }),
     });
 
     const n8nData = await readN8nResponse(n8nResponse);
@@ -60,6 +64,19 @@ export async function POST(req: NextRequest) {
         },
         { status: 502 }
       );
+    }
+
+    if (isRecord(n8nData)) {
+      const requestId = getOptionalString(n8nData.request_id);
+
+      if (requestId) {
+        return NextResponse.json({
+          ...n8nData,
+          success: true,
+          task_id: requestId,
+          status: getOptionalString(n8nData.status) || "processing",
+        });
+      }
     }
 
     return NextResponse.json(n8nData);
