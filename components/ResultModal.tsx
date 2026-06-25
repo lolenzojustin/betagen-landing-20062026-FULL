@@ -24,6 +24,7 @@ function getVideoFileName(videoUrl: string) {
 
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [hasSavedVideo, setHasSavedVideo] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
   const fileName = getVideoFileName(videoUrl);
@@ -36,6 +37,7 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
     document.body.appendChild(link);
     link.click();
     link.remove();
+    setHasSavedVideo(true);
   };
 
   const handleSaveVideo = async () => {
@@ -62,6 +64,7 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
           title: "Betagen video",
           text: "Video Betagen của bạn đã sẵn sàng.",
         });
+        setHasSavedVideo(true);
         return;
       }
 
@@ -107,6 +110,16 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save
             Video để lưu vào thư viện ảnh.
           </p>
+          {hasSavedVideo && (
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-full bg-[#354A93] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#2b3d7d]"
+            >
+              Bấm để xem video
+            </a>
+          )}
           {saveError && (
             <p className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold leading-snug text-[#EA0029]">
               {saveError}
