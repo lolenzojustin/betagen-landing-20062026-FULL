@@ -465,7 +465,7 @@ export default function Home() {
             style={{
               left: "80px",
               top: "531px",
-              width: "870px",
+              width: "780px",
             }}
           >
             <NoteSection />

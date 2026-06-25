@@ -409,20 +409,20 @@ body {
 
   .responsive-note h2 {
     margin-bottom: 18px;
-    font-size: clamp(28px, 6.5vw, 38px);
+    font-size: clamp(25px, 5.6vw, 34px);
   }
 
   .responsive-note > div {
     border: 1px solid rgba(255, 255, 255, 0.54);
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.44);
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.38);
+    padding: 18px;
   }
 
   .responsive-note p {
     color: #354a93;
-    font-size: clamp(15px, 3.4vw, 21px);
-    line-height: 1.22;
+    font-size: clamp(14px, 3vw, 18px);
+    line-height: 1.32;
     overflow-wrap: anywhere;
   }
 
