@@ -16,19 +16,39 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function getNestedVideoUrl(value: Record<string, unknown>) {
+  const videoUrl = value.video_url;
+  if (typeof videoUrl === "string") {
+    return videoUrl;
+  }
+
+  const video = value.video;
+  if (!isRecord(video)) {
+    return undefined;
+  }
+
+  const url = video.url;
+  return typeof url === "string" ? url : undefined;
+}
+
+function normalizeVideoResult(value: Record<string, unknown>, raw?: unknown) {
+  const videoUrl = getNestedVideoUrl(value);
+
+  return {
+    ...value,
+    ...(videoUrl ? { video_url: videoUrl } : {}),
+    ...(raw ? { n8n_response: raw } : {}),
+  };
+}
+
 function normalizeN8nResponse(value: unknown) {
   if (isRecord(value)) {
-    return value;
+    return normalizeVideoResult(value);
   }
 
   if (Array.isArray(value)) {
     const firstItem = value[0];
-    return isRecord(firstItem)
-      ? {
-          ...firstItem,
-          n8n_response: value,
-        }
-      : value;
+    return isRecord(firstItem) ? normalizeVideoResult(firstItem, value) : value;
   }
 
   return value;
