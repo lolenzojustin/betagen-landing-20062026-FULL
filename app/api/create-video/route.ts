@@ -6,6 +6,8 @@ import {
 } from "@/lib/video-lock.server";
 
 export const runtime = "nodejs";
+const CREATE_VIDEO_SYSTEM_ERROR =
+  "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 
 interface CreateVideoRequestBody {
   image_url?: unknown;
@@ -117,7 +119,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "n8n create-video webhook request failed",
+          error: CREATE_VIDEO_SYSTEM_ERROR,
+          code: "create_video_system_error",
           status: n8nResponse.status,
           n8n_response: n8nData,
         },
@@ -156,7 +159,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      {
+        success: false,
+        error: CREATE_VIDEO_SYSTEM_ERROR,
+        code: "create_video_system_error",
+      },
       { status: 500 }
     );
   }

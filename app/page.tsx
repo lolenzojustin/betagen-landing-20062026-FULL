@@ -34,6 +34,7 @@ const POLLING_INTERVAL_MS = 10_000;
 const MAX_POLLING_ATTEMPTS = 20;
 const VIDEO_BUSY_MESSAGE =
   "Đang có người tạo video, xin vui lòng đợi và thử lại.";
+const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
 const MAX_STORED_VIDEO_JOB_AGE_MS = 30 * 60 * 1000;
 
@@ -273,13 +274,29 @@ export default function Home() {
           controller.signal
         );
 
-        const result = await checkVideo(
-          currentJob.taskId,
-          currentJob.lockId,
-          controller.signal
-        );
-
         const completedAttempts = currentJob.attempts + 1;
+        let result;
+
+        try {
+          result = await checkVideo(
+            currentJob.taskId,
+            currentJob.lockId,
+            controller.signal
+          );
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          console.warn("[Check Video] Retrying after network error:", error);
+          currentJob = {
+            ...currentJob,
+            attempts: completedAttempts,
+            nextCheckAt: Date.now() + POLLING_INTERVAL_MS,
+          };
+          saveStoredVideoJob(currentJob);
+          continue;
+        }
 
         const status =
           typeof result.status === "string" ? result.status.toUpperCase() : "";
@@ -291,7 +308,18 @@ export default function Home() {
           return;
         }
 
-        if (status === "ERROR" || result.success === false) {
+        if (result.success === false) {
+          console.warn("[Check Video] Retrying after API error:", result);
+          currentJob = {
+            ...currentJob,
+            attempts: completedAttempts,
+            nextCheckAt: Date.now() + POLLING_INTERVAL_MS,
+          };
+          saveStoredVideoJob(currentJob);
+          continue;
+        }
+
+        if (status === "ERROR") {
           clearStoredVideoJob();
           setErrorMessage(
             result.error || "Không thể tạo video. Vui lòng thử lại."
@@ -308,7 +336,7 @@ export default function Home() {
       }
 
       clearStoredVideoJob();
-      setErrorMessage("Không tạo được video, vui lòng thử lại.");
+      setErrorMessage("Không tạo được video, vui lòng thử lại sau.");
     } catch (error) {
       if (controller.signal.aborted) {
         return;
@@ -432,7 +460,7 @@ export default function Home() {
       }
 
       console.error("[Create Video] Connection/Network error:", error);
-      setErrorMessage("Đã xảy ra lỗi kết nối với API.");
+      setErrorMessage(SYSTEM_UPGRADE_MESSAGE);
       setIsLoading(false);
     }
   };
