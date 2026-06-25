@@ -258,16 +258,6 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const triggerVideoDownload = useCallback((videoUrl: string) => {
-    const link = document.createElement("a");
-    link.href = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
-    link.download = "betagen-video.mp4";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }, []);
-
   const pollVideoResult = useCallback(async (initialJob: ActiveVideoJob) => {
     stopPolling();
     saveStoredVideoJob(initialJob);
@@ -296,11 +286,8 @@ export default function Home() {
 
         if (status === "COMPLETED" && result.video_url) {
           clearStoredVideoJob();
-          triggerVideoDownload(result.video_url);
           setResultVideoUrl(result.video_url);
-          setSuccessMessage(
-            "Video đã tạo xong, trình duyệt đang tải video về thiết bị."
-          );
+          setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
           return;
         }
 
@@ -343,7 +330,7 @@ export default function Home() {
         setIsLoading(false);
       }
     }
-  }, [stopPolling, triggerVideoDownload]);
+  }, [stopPolling]);
 
   useEffect(() => {
     const resumeStoredVideoJob = () => {

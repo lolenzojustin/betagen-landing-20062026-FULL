@@ -1,12 +1,85 @@
 "use client";
 
+import { useState } from "react";
+
 interface ResultModalProps {
   videoUrl: string;
   onClose: () => void;
 }
 
+function getVideoFileName(videoUrl: string) {
+  try {
+    const url = new URL(videoUrl);
+    const fileName = url.pathname.split("/").filter(Boolean).pop();
+
+    if (fileName?.includes(".")) {
+      return fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+    }
+  } catch {
+    // Use the default file name below.
+  }
+
+  return "betagen-video.mp4";
+}
+
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
+  const fileName = getVideoFileName(videoUrl);
+
+  const fallbackDownload = () => {
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = fileName;
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const handleSaveVideo = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch(downloadUrl, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to download video.");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], fileName, {
+        type: blob.type || "video/mp4",
+      });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Betagen video",
+          text: "Video Betagen của bạn đã sẵn sàng.",
+        });
+        return;
+      }
+
+      fallbackDownload();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      console.error("[Save Video] Unable to save video:", error);
+      setSaveError(
+        "Trình duyệt chưa cho lưu trực tiếp. Nếu video mở lên, hãy bấm nút chia sẻ hoặc dấu ba chấm rồi chọn Lưu video."
+      );
+      fallbackDownload();
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -23,13 +96,22 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
           Video cá nhân hóa của bạn đã được tạo thành công.
         </p>
         <div className="flex flex-col gap-3">
-          <a
-            href={downloadUrl}
-            download="betagen-video.mp4"
-            className="block w-full rounded-full bg-[#EA0029] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#c90024]"
+          <button
+            onClick={handleSaveVideo}
+            disabled={isSaving}
+            className="block w-full rounded-full bg-[#EA0029] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#c90024] disabled:cursor-wait disabled:opacity-75"
           >
-            Tải video
-          </a>
+            {isSaving ? "Đang chuẩn bị video..." : "Tải video"}
+          </button>
+          <p className="text-xs leading-snug text-[#354A93]/65">
+            Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save
+            Video để lưu vào thư viện ảnh.
+          </p>
+          {saveError && (
+            <p className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold leading-snug text-[#EA0029]">
+              {saveError}
+            </p>
+          )}
           <button
             onClick={onClose}
             className="w-full rounded-full border border-[#354A93] py-3 text-base font-bold text-[#354A93] transition-colors hover:bg-[#354A93]/5"
