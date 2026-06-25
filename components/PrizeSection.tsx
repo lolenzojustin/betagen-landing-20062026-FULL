@@ -9,7 +9,7 @@ const prizes = [
     image: "/images/03-section-prize-note/prize-headphone.png",
     alt: "Tai nghe Bluetooth chụp tai Beats Solo 4",
     card: { left: 20, top: 55, width: 390, height: 150 },
-    number: { left: 20, top: 28, size: 82 },
+    number: { left: 20, top: 34, size: 68 },
     text: { left: 96, top: 36, width: 170 },
     gift: { left: -19, top: 124, size: 46 },
     imageBox: { left: 235, top: -42, width: 175 },
@@ -20,7 +20,7 @@ const prizes = [
     image: "/images/03-section-prize-note/prize-rice-cooker.png",
     alt: "Nồi chiên không dầu Philips",
     card: { left: 455, top: 55, width: 450, height: 150 },
-    number: { left: 28, top: 39, size: 74 },
+    number: { left: 28, top: 44, size: 62 },
     text: { left: 108, top: 46, width: 150 },
     gift: { left: -14, top: 124, size: 46 },
     imageBox: { left: 226, top: -28, width: 218 },
@@ -31,7 +31,7 @@ const prizes = [
     image: "/images/03-section-prize-note/prize-blender.png",
     alt: "Máy xay sinh tố cầm tay Bear",
     card: { left: 910, top: 55, width: 376, height: 150 },
-    number: { left: 27, top: 29, size: 86 },
+    number: { left: 27, top: 35, size: 70 },
     text: { left: 102, top: 56, width: 175 },
     gift: { left: -13, top: 124, size: 46 },
     imageBox: { left: 246, top: -55, width: 150 },
@@ -78,7 +78,7 @@ export default function PrizeSection() {
               left: `${prize.text.left}px`,
               top: `${prize.text.top}px`,
               width: `${prize.text.width}px`,
-              fontSize: "20px",
+              fontSize: "17px",
             }}
           >
             {prize.name}

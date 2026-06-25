@@ -442,7 +442,7 @@ export default function Home() {
           >
             <h2
               className="font-black leading-none text-[#354A93]"
-              style={{ fontSize: "41px" }}
+              style={{ fontSize: "34px" }}
             >
               GIẢI THƯỞNG HẤP DẪN
             </h2>

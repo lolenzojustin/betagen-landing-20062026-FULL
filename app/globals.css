@@ -351,7 +351,7 @@ body {
   .responsive-prize > h2 {
     max-width: 720px;
     margin: 0 auto 26px;
-    font-size: clamp(32px, 7.2vw, 48px);
+    font-size: clamp(28px, 6.2vw, 40px);
   }
 
   .responsive-prize-grid {
@@ -375,7 +375,7 @@ body {
 
   .responsive-prize-card span {
     color: #ea0029;
-    font-size: clamp(54px, 13vw, 82px);
+    font-size: clamp(46px, 11vw, 68px);
     font-weight: 950;
     line-height: 0.86;
   }
@@ -385,7 +385,7 @@ body {
     max-width: 260px;
     min-width: 0;
     color: #354a93;
-    font-size: clamp(17px, 4vw, 22px);
+    font-size: clamp(15px, 3.5vw, 19px);
     font-weight: 900;
     line-height: 1.15;
     overflow-wrap: anywhere;
@@ -409,7 +409,7 @@ body {
 
   .responsive-note h2 {
     margin-bottom: 18px;
-    font-size: clamp(34px, 8vw, 46px);
+    font-size: clamp(28px, 6.5vw, 38px);
   }
 
   .responsive-note > div {
@@ -421,7 +421,7 @@ body {
 
   .responsive-note p {
     color: #354a93;
-    font-size: clamp(17px, 4vw, 25px);
+    font-size: clamp(15px, 3.4vw, 21px);
     line-height: 1.22;
     overflow-wrap: anywhere;
   }
