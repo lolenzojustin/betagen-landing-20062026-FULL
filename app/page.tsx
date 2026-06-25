@@ -50,7 +50,11 @@ export default function Home() {
   const [canvasScale, setCanvasScale] = useState(1);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const videoSectionRef = useRef<HTMLElement>(null);
+  const prizeSectionRef = useRef<HTMLElement>(null);
+  const noteSectionRef = useRef<HTMLDivElement>(null);
   const responsiveVideoSectionRef = useRef<HTMLElement>(null);
+  const responsivePrizeSectionRef = useRef<HTMLElement>(null);
+  const responsiveNoteSectionRef = useRef<HTMLDivElement>(null);
   const pollingAbortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -116,6 +120,24 @@ export default function Home() {
         : videoSectionRef.current;
 
     target?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToPrize = () => {
+    const target =
+      window.innerWidth < 900
+        ? responsivePrizeSectionRef.current
+        : prizeSectionRef.current;
+
+    target?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToNote = () => {
+    const target =
+      window.innerWidth < 900
+        ? responsiveNoteSectionRef.current
+        : noteSectionRef.current;
+
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const getVideoDownloadUrl = (videoUrl: string) =>
@@ -296,7 +318,11 @@ export default function Home() {
       >
 
         {/* ─── Section 1: Hero ─── */}
-        <HeroSection onCreateVideo={scrollToVideo} />
+        <HeroSection
+          onCreateVideo={scrollToVideo}
+          onViewPrize={scrollToPrize}
+          onViewNote={scrollToNote}
+        />
 
         {/* ─── Section 2: Video Upload + Thể lệ ─── */}
         <section
@@ -424,6 +450,7 @@ export default function Home() {
 
         {/* ─── Section 3: Giải thưởng + Lưu ý ─── */}
         <section
+          ref={prizeSectionRef}
           id="prize-section"
           className="design-section"
         >
@@ -449,6 +476,7 @@ export default function Home() {
           </div>
 
           <div
+            ref={noteSectionRef}
             className="absolute z-20"
             style={{
               left: "80px",
@@ -507,8 +535,8 @@ export default function Home() {
             />
             <nav className="responsive-nav">
               <button onClick={scrollToVideo}>Tạo video</button>
-              <button>Giải thưởng</button>
-              <button>Lưu ý</button>
+              <button onClick={scrollToPrize}>Giải thưởng</button>
+              <button onClick={scrollToNote}>Lưu ý</button>
             </nav>
           </div>
 
@@ -621,7 +649,10 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="responsive-section responsive-prize">
+        <section
+          ref={responsivePrizeSectionRef}
+          className="responsive-section responsive-prize"
+        >
           <Image
             src="/images/03-section-prize-note/wave-prize-note.png"
             alt=""
@@ -673,7 +704,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="responsive-note">
+          <div ref={responsiveNoteSectionRef} className="responsive-note">
             <h2>LƯU Ý</h2>
             <div>
               <p>*Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>

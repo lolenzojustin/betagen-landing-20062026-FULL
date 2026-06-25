@@ -4,9 +4,15 @@ import Image from "next/image";
 
 interface HeroSectionProps {
   onCreateVideo?: () => void;
+  onViewPrize?: () => void;
+  onViewNote?: () => void;
 }
 
-export default function HeroSection({ onCreateVideo }: HeroSectionProps) {
+export default function HeroSection({
+  onCreateVideo,
+  onViewPrize,
+  onViewNote,
+}: HeroSectionProps) {
   return (
     <section id="hero-section" className="design-section">
       <div className="design-stage">
@@ -34,13 +40,22 @@ export default function HeroSection({ onCreateVideo }: HeroSectionProps) {
           className="absolute z-20 flex items-center"
           style={{ left: "865px", top: "44px", gap: "26px" }}
         >
-          <button className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white transition-colors hover:bg-[#c90024]">
+          <button
+            onClick={onCreateVideo}
+            className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white shadow-[0_10px_24px_rgba(234,0,41,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#c90024] active:translate-y-0"
+          >
             Tạo video &amp; Thể lệ
           </button>
-          <button className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white transition-colors hover:bg-[#c90024]">
+          <button
+            onClick={onViewPrize}
+            className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white shadow-[0_10px_24px_rgba(234,0,41,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#c90024] active:translate-y-0"
+          >
             Giải thưởng
           </button>
-          <button className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white transition-colors hover:bg-[#c90024]">
+          <button
+            onClick={onViewNote}
+            className="h-[42px] rounded-full bg-[#EA0029] px-5 text-[17px] font-bold leading-none text-white shadow-[0_10px_24px_rgba(234,0,41,0.18)] transition-all hover:-translate-y-0.5 hover:bg-[#c90024] active:translate-y-0"
+          >
             Lưu ý
           </button>
         </div>
