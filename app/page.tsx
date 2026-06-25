@@ -8,6 +8,7 @@ import {
   useEffect,
   type ChangeEvent,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 import HeroSection from "@/components/HeroSection";
 import VideoTemplateBox from "@/components/VideoTemplateBox";
@@ -31,6 +32,8 @@ import {
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 10_000;
 const MAX_POLLING_ATTEMPTS = 20;
+const VIDEO_BUSY_MESSAGE =
+  "Đang có người tạo video, xin vui lòng đợi và thử lại.";
 
 function waitForNextPoll(ms: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -45,6 +48,30 @@ function waitForNextPoll(ms: number, signal: AbortSignal) {
       { once: true }
     );
   });
+}
+
+function StatusMessage({
+  type,
+  children,
+  className = "",
+}: {
+  type: "success" | "error";
+  children: ReactNode;
+  className?: string;
+}) {
+  const colorClass =
+    type === "success"
+      ? "border-green-200 bg-green-50/95 text-[#1f7a43]"
+      : "border-red-200 bg-white/95 text-[#EA0029]";
+
+  return (
+    <div
+      className={`status-message ${colorClass} ${className}`}
+      role={type === "error" ? "alert" : "status"}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -271,7 +298,9 @@ export default function Home() {
 
       console.error("[Create Video] API error response:", result);
       setErrorMessage(
-        result.error || "API tạo task thành công nhưng chưa trả về request_id."
+        result.status === "busy"
+          ? VIDEO_BUSY_MESSAGE
+          : result.error || "API tạo task thành công nhưng chưa trả về request_id."
       );
       setIsLoading(false);
     } catch (error) {
@@ -416,17 +445,26 @@ export default function Home() {
               )}
               {selectedImage ? "Bắt đầu tạo video" : "Tải lên hình ảnh của bạn"}
             </button>
-            {successMessage && (
-              <div className="mt-2 text-xs font-semibold text-[#1f7a43] bg-green-50/95 px-3 py-1.5 rounded-full border border-green-200 text-center shadow-sm whitespace-nowrap">
-                {successMessage}
-              </div>
-            )}
-            {errorMessage && (
-              <div className="mt-2 text-xs font-semibold text-red-600 bg-red-50/90 px-3 py-1.5 rounded-full border border-red-200 text-center shadow-sm whitespace-nowrap">
-                Lỗi: {errorMessage}
-              </div>
-            )}
           </div>
+
+          {(successMessage || errorMessage) && (
+            <div
+              className="absolute z-50 flex justify-center"
+              style={{
+                left: "50%",
+                top: "506px",
+                transform: "translateX(-50%)",
+                width: "720px",
+              }}
+            >
+              {successMessage && (
+                <StatusMessage type="success">{successMessage}</StatusMessage>
+              )}
+              {errorMessage && (
+                <StatusMessage type="error">{errorMessage}</StatusMessage>
+              )}
+            </div>
+          )}
 
           <div
             className="absolute z-30 text-center"
@@ -619,15 +657,15 @@ export default function Home() {
           </button>
 
           {successMessage && (
-            <div className="mt-2 text-xs font-semibold text-[#1f7a43] bg-green-50/95 px-3 py-1.5 rounded-full border border-green-200 text-center shadow-sm max-w-[340px] mx-auto">
+            <StatusMessage type="success" className="responsive-status-message">
               {successMessage}
-            </div>
+            </StatusMessage>
           )}
 
           {errorMessage && (
-            <div className="mt-2 text-xs font-semibold text-red-600 bg-red-50/90 px-3 py-1.5 rounded-full border border-red-200 text-center shadow-sm max-w-[280px] mx-auto">
-              Lỗi: {errorMessage}
-            </div>
+            <StatusMessage type="error" className="responsive-status-message">
+              {errorMessage}
+            </StatusMessage>
           )}
 
           <div className="responsive-video-note">
