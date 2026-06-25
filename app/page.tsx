@@ -485,11 +485,11 @@ export default function Home() {
 
         {/* Footer */}
         <footer
-          className="relative bg-[#354A93] py-4 text-center"
+          className="relative bg-[#354A93] py-4 text-center shadow-[0_-10px_28px_rgba(53,74,147,0.12)]"
           style={{ zIndex: 30 }}
         >
-          <p className="text-sm text-white/80">
-            © 2025 Betagen. Chương trình VIVU Tốt Bụng.
+          <p className="text-sm font-medium tracking-[0.01em] text-white/85">
+            © 2026 Betagen. Chương trình VIVU Tốt Bụng 2026.
           </p>
         </footer>
       </div>
@@ -528,8 +528,8 @@ export default function Home() {
               TRÚNG QUÀ CỰC MÊ
             </h1>
             <p>
-              Lorem ipsum dictum gravida tempor varius elementum augue feugiat
-              curabitur nam gravida nunc amet egestas morbi scelerisque turpis.
+              Tải ảnh chân dung, tạo video VIVU Tốt Bụng của riêng bạn và tham
+              gia chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
           </div>
@@ -687,7 +687,7 @@ export default function Home() {
         </section>
 
         <footer className="responsive-footer">
-          © 2025 Betagen. Chương trình VIVU Tốt Bụng.
+          © 2026 Betagen. Chương trình VIVU Tốt Bụng 2026.
         </footer>
       </div>
     </div>

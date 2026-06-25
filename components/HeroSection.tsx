@@ -85,10 +85,8 @@ export default function HeroSection({ onCreateVideo }: HeroSectionProps) {
               maxWidth: "535px",
             }}
           >
-            Lorem ipsum dictum gravida tempor varius elementum augue feugiat
-            curabitur nam gravida nunc amet egestas morbi scelerisque turpis
-            fermentum est diam orci volutpat id accumsan porta elementum duis
-            magna vestibulum id ac sed morbi nunc lectus id aenean nibh donec.
+            Tải ảnh chân dung, tạo video VIVU Tốt Bụng của riêng bạn và tham
+            gia chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
           </p>
 
           <button

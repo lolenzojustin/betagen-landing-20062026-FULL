@@ -417,6 +417,7 @@ body {
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.38);
     padding: 18px;
+    box-shadow: 0 12px 28px rgba(53, 74, 147, 0.08);
   }
 
   .responsive-note p {
@@ -426,12 +427,19 @@ body {
     overflow-wrap: anywhere;
   }
 
+  .responsive-note p + p {
+    margin-top: 8px;
+  }
+
   .responsive-footer {
-    background: #354a93;
-    color: rgba(255, 255, 255, 0.84);
-    padding: 14px 20px;
+    background: linear-gradient(180deg, #4058a6 0%, #354a93 100%);
+    color: rgba(255, 255, 255, 0.88);
+    padding: 16px 22px;
     text-align: center;
     font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
   }
 }
 
@@ -584,6 +592,11 @@ body {
   .responsive-note p {
     font-size: 14px;
   }
+
+  .responsive-footer {
+    padding: 14px 18px;
+    font-size: 12px;
+  }
 }
 
 @media (min-width: 600px) and (max-width: 899px) {
@@ -604,6 +617,12 @@ body {
   .responsive-rule-grid,
   .responsive-prize-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .responsive-prize-card:last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 520px);
   }
 
   .responsive-note {
