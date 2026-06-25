@@ -498,11 +498,11 @@ export default function Home() {
         <section className="responsive-section responsive-hero">
           <div className="responsive-topbar">
             <Image
-              src="/images/logo/logo-betagen.png"
+              src="/images/01-section-hero/logo-betagen.png"
               alt="Betagen Logo"
-              width={160}
-              height={80}
-              className="responsive-logo object-contain"
+              width={151}
+              height={44}
+              className="responsive-logo"
               priority
             />
             <nav className="responsive-nav">

@@ -20,12 +20,12 @@ export default function HeroSection({ onCreateVideo }: HeroSectionProps) {
 
         <div className="absolute z-20" style={{ left: "107px", top: "42px" }}>
           <Image
-            src="/images/logo/logo-betagen.png"
+            src="/images/01-section-hero/logo-betagen.png"
             alt="Betagen Logo"
-            width={160}
-            height={80}
-            className="h-auto object-contain"
-            style={{ width: "160px", height: "auto" }}
+            width={151}
+            height={44}
+            className="h-auto"
+            style={{ width: "151px", height: "auto" }}
             priority
           />
         </div>

@@ -115,7 +115,7 @@ body {
   }
 
   .responsive-logo {
-    width: clamp(90px, 24vw, 130px);
+    width: clamp(112px, 25vw, 151px);
   }
 
   .responsive-nav {
