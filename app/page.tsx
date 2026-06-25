@@ -34,6 +34,16 @@ const POLLING_INTERVAL_MS = 10_000;
 const MAX_POLLING_ATTEMPTS = 20;
 const VIDEO_BUSY_MESSAGE =
   "Đang có người tạo video, xin vui lòng đợi và thử lại.";
+const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
+const MAX_STORED_VIDEO_JOB_AGE_MS = 30 * 60 * 1000;
+
+type ActiveVideoJob = {
+  taskId: string;
+  lockId?: string;
+  createdAt: number;
+  nextCheckAt: number;
+  attempts: number;
+};
 
 function waitForNextPoll(ms: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -48,6 +58,82 @@ function waitForNextPoll(ms: number, signal: AbortSignal) {
       { once: true }
     );
   });
+}
+
+function isActiveVideoJob(value: unknown): value is ActiveVideoJob {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const job = value as Partial<ActiveVideoJob>;
+
+  return (
+    typeof job.taskId === "string" &&
+    (typeof job.lockId === "undefined" || typeof job.lockId === "string") &&
+    typeof job.createdAt === "number" &&
+    typeof job.nextCheckAt === "number" &&
+    typeof job.attempts === "number"
+  );
+}
+
+function readStoredVideoJob() {
+  try {
+    const rawJob = window.localStorage.getItem(ACTIVE_VIDEO_JOB_STORAGE_KEY);
+
+    if (!rawJob) {
+      return null;
+    }
+
+    const job = JSON.parse(rawJob) as unknown;
+
+    if (!isActiveVideoJob(job)) {
+      window.localStorage.removeItem(ACTIVE_VIDEO_JOB_STORAGE_KEY);
+      return null;
+    }
+
+    if (
+      Date.now() - job.createdAt > MAX_STORED_VIDEO_JOB_AGE_MS ||
+      job.attempts >= MAX_POLLING_ATTEMPTS
+    ) {
+      window.localStorage.removeItem(ACTIVE_VIDEO_JOB_STORAGE_KEY);
+      return null;
+    }
+
+    return job;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredVideoJob(job: ActiveVideoJob) {
+  try {
+    window.localStorage.setItem(
+      ACTIVE_VIDEO_JOB_STORAGE_KEY,
+      JSON.stringify(job)
+    );
+  } catch {
+    // The in-memory polling still works if localStorage is unavailable.
+  }
+}
+
+function clearStoredVideoJob() {
+  try {
+    window.localStorage.removeItem(ACTIVE_VIDEO_JOB_STORAGE_KEY);
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+}
+
+function createActiveVideoJob(taskId: string, lockId?: string): ActiveVideoJob {
+  const now = Date.now();
+
+  return {
+    taskId,
+    lockId,
+    createdAt: now,
+    nextCheckAt: now + INITIAL_POLLING_DELAY_MS,
+    attempts: 0,
+  };
 }
 
 function StatusMessage({
@@ -172,38 +258,44 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const getVideoDownloadUrl = (videoUrl: string) =>
-    `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
-
-  const triggerVideoDownload = (videoUrl: string) => {
+  const triggerVideoDownload = useCallback((videoUrl: string) => {
     const link = document.createElement("a");
-    link.href = getVideoDownloadUrl(videoUrl);
+    link.href = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
     link.download = "betagen-video.mp4";
     link.rel = "noopener noreferrer";
     document.body.appendChild(link);
     link.click();
     link.remove();
-  };
+  }, []);
 
-  const pollVideoResult = async (taskId: string, lockId?: string) => {
+  const pollVideoResult = useCallback(async (initialJob: ActiveVideoJob) => {
     stopPolling();
+    saveStoredVideoJob(initialJob);
 
     const controller = new AbortController();
     pollingAbortRef.current = controller;
+    let currentJob = initialJob;
 
     try {
-      for (let attempt = 0; attempt < MAX_POLLING_ATTEMPTS; attempt += 1) {
+      while (currentJob.attempts < MAX_POLLING_ATTEMPTS) {
         await waitForNextPoll(
-          attempt === 0 ? INITIAL_POLLING_DELAY_MS : POLLING_INTERVAL_MS,
+          Math.max(currentJob.nextCheckAt - Date.now(), 0),
           controller.signal
         );
 
-        const result = await checkVideo(taskId, lockId, controller.signal);
+        const result = await checkVideo(
+          currentJob.taskId,
+          currentJob.lockId,
+          controller.signal
+        );
+
+        const completedAttempts = currentJob.attempts + 1;
 
         const status =
           typeof result.status === "string" ? result.status.toUpperCase() : "";
 
         if (status === "COMPLETED" && result.video_url) {
+          clearStoredVideoJob();
           triggerVideoDownload(result.video_url);
           setResultVideoUrl(result.video_url);
           setSuccessMessage(
@@ -213,13 +305,22 @@ export default function Home() {
         }
 
         if (status === "ERROR" || result.success === false) {
+          clearStoredVideoJob();
           setErrorMessage(
             result.error || "Không thể tạo video. Vui lòng thử lại."
           );
           return;
         }
+
+        currentJob = {
+          ...currentJob,
+          attempts: completedAttempts,
+          nextCheckAt: Date.now() + POLLING_INTERVAL_MS,
+        };
+        saveStoredVideoJob(currentJob);
       }
 
+      clearStoredVideoJob();
       setErrorMessage("Không tạo được video, vui lòng thử lại.");
     } catch (error) {
       if (controller.signal.aborted) {
@@ -230,9 +331,9 @@ export default function Home() {
       setErrorMessage("Đã xảy ra lỗi kết nối với API.");
     } finally {
       if (!controller.signal.aborted && pollingAbortRef.current === controller) {
-        if (lockId) {
+        if (currentJob.lockId) {
           try {
-            await releaseVideoLock(lockId);
+            await releaseVideoLock(currentJob.lockId);
           } catch (error) {
             console.warn("[Video Lock] Unable to release lock:", error);
           }
@@ -242,12 +343,47 @@ export default function Home() {
         setIsLoading(false);
       }
     }
-  };
+  }, [stopPolling, triggerVideoDownload]);
+
+  useEffect(() => {
+    const resumeStoredVideoJob = () => {
+      const storedJob = readStoredVideoJob();
+
+      if (!storedJob) {
+        return;
+      }
+
+      requestIdRef.current += 1;
+      setIsLoading(true);
+      setResultVideoUrl(null);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      void pollVideoResult(storedJob);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resumeStoredVideoJob();
+      }
+    };
+
+    resumeStoredVideoJob();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", resumeStoredVideoJob);
+    window.addEventListener("pageshow", resumeStoredVideoJob);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", resumeStoredVideoJob);
+      window.removeEventListener("pageshow", resumeStoredVideoJob);
+    };
+  }, [pollVideoResult]);
 
   const handleCreateVideo = async () => {
     if (!selectedFile || isLoading) return;
 
     stopPolling();
+    clearStoredVideoJob();
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     setIsLoading(true);
@@ -292,7 +428,7 @@ export default function Home() {
         typeof result.lock_id === "string" ? result.lock_id : undefined;
 
       if (taskId) {
-        void pollVideoResult(taskId, lockId);
+        void pollVideoResult(createActiveVideoJob(taskId, lockId));
         return;
       }
 
