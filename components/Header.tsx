@@ -17,12 +17,12 @@ export default function Header({ onNavigate }: HeaderProps) {
       style={{ padding: "30px 60px" }}
     >
       <Image
-        src="/images/01-section-hero/logo-betagen.png"
+        src="/images/logo/logo-betagen.png"
         alt="Betagen Logo"
-        width={120}
-        height={40}
-        className="h-auto"
-        style={{ width: "120px" }}
+        width={160}
+        height={80}
+        className="h-auto object-contain"
+        style={{ width: "150px" }}
         priority
       />
       <nav className="flex items-center gap-3">
