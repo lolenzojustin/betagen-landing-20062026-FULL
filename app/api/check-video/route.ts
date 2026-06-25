@@ -12,6 +12,28 @@ async function readN8nResponse(response: Response) {
   return response.text();
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeN8nResponse(value: unknown) {
+  if (isRecord(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const firstItem = value[0];
+    return isRecord(firstItem)
+      ? {
+          ...firstItem,
+          n8n_response: value,
+        }
+      : value;
+  }
+
+  return value;
+}
+
 export async function GET(req: NextRequest) {
   const taskId =
     req.nextUrl.searchParams.get("task_id") ||
@@ -57,7 +79,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(n8nData);
+    return NextResponse.json(normalizeN8nResponse(n8nData));
   } catch (error) {
     console.error("Error checking video task:", error);
 

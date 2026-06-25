@@ -25,6 +25,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function getCreateVideoResult(value: unknown) {
+  if (isRecord(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const firstItem = value[0];
+    return isRecord(firstItem) ? firstItem : undefined;
+  }
+
+  return undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as CreateVideoRequestBody;
@@ -66,15 +79,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (isRecord(n8nData)) {
-      const requestId = getOptionalString(n8nData.request_id);
+    const createVideoResult = getCreateVideoResult(n8nData);
+
+    if (createVideoResult) {
+      const requestId = getOptionalString(createVideoResult.request_id);
 
       if (requestId) {
         return NextResponse.json({
-          ...n8nData,
+          ...createVideoResult,
           success: true,
           task_id: requestId,
-          status: getOptionalString(n8nData.status) || "processing",
+          status: getOptionalString(createVideoResult.status) || "processing",
+          n8n_response: n8nData,
         });
       }
     }
