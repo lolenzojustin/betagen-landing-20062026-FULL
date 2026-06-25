@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  acquireVideoLock,
+  isVideoLockConfigured,
+  releaseVideoLock,
+} from "@/lib/video-lock.server";
 
 export const runtime = "nodejs";
 
@@ -9,12 +14,21 @@ interface CreateVideoRequestBody {
 
 async function readN8nResponse(response: Response) {
   const contentType = response.headers.get("content-type") || "";
+  const responseText = await response.text();
 
   if (contentType.includes("application/json")) {
-    return response.json();
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return responseText;
+    }
   }
 
-  return response.text();
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return responseText;
+  }
 }
 
 function getOptionalString(value: unknown) {
@@ -39,6 +53,8 @@ function getCreateVideoResult(value: unknown) {
 }
 
 export async function POST(req: NextRequest) {
+  let lockOwnerId: string | undefined;
+
   try {
     const body = (await req.json()) as CreateVideoRequestBody;
     const imageUrl = getOptionalString(body.image_url);
@@ -57,6 +73,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!isVideoLockConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Video lock storage is not configured.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const lock = await acquireVideoLock();
+
+    if (!lock.acquired) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: "busy",
+          error: "Đang có người tạo video, xin vui lòng chờ đợi và thử lại.",
+        },
+        { status: 409 }
+      );
+    }
+
+    lockOwnerId = lock.ownerId;
+
     const n8nResponse = await fetch(process.env.N8N_CREATE_VIDEO_WEBHOOK, {
       method: "POST",
       headers: {
@@ -68,6 +109,11 @@ export async function POST(req: NextRequest) {
     const n8nData = await readN8nResponse(n8nResponse);
 
     if (!n8nResponse.ok) {
+      if (lockOwnerId) {
+        await releaseVideoLock(lockOwnerId);
+        lockOwnerId = undefined;
+      }
+
       return NextResponse.json(
         {
           success: false,
@@ -89,15 +135,25 @@ export async function POST(req: NextRequest) {
           ...createVideoResult,
           success: true,
           task_id: requestId,
+          lock_id: lockOwnerId,
           status: getOptionalString(createVideoResult.status) || "processing",
           n8n_response: n8nData,
         });
       }
     }
 
+    if (lockOwnerId) {
+      await releaseVideoLock(lockOwnerId);
+      lockOwnerId = undefined;
+    }
+
     return NextResponse.json(n8nData);
   } catch (error) {
     console.error("Error creating video task:", error);
+
+    if (lockOwnerId) {
+      await releaseVideoLock(lockOwnerId);
+    }
 
     return NextResponse.json(
       { success: false, error: "Internal server error" },

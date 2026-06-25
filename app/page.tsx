@@ -17,7 +17,12 @@ import RuleSection from "@/components/RuleSection";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
 import { TEMPLATE_VIDEO_URL } from "@/lib/constants";
-import { checkVideo, createVideo, uploadImageToFreeImage } from "@/lib/api";
+import {
+  checkVideo,
+  createVideo,
+  releaseVideoLock,
+  uploadImageToFreeImage,
+} from "@/lib/api";
 import {
   IMAGE_UPLOAD_ACCEPT,
   isAcceptedImageUpload,
@@ -153,7 +158,7 @@ export default function Home() {
     link.remove();
   };
 
-  const pollVideoResult = async (taskId: string) => {
+  const pollVideoResult = async (taskId: string, lockId?: string) => {
     stopPolling();
 
     const controller = new AbortController();
@@ -166,7 +171,7 @@ export default function Home() {
           controller.signal
         );
 
-        const result = await checkVideo(taskId, controller.signal);
+        const result = await checkVideo(taskId, lockId, controller.signal);
 
         const status =
           typeof result.status === "string" ? result.status.toUpperCase() : "";
@@ -198,6 +203,14 @@ export default function Home() {
       setErrorMessage("Đã xảy ra lỗi kết nối với API.");
     } finally {
       if (!controller.signal.aborted && pollingAbortRef.current === controller) {
+        if (lockId) {
+          try {
+            await releaseVideoLock(lockId);
+          } catch (error) {
+            console.warn("[Video Lock] Unable to release lock:", error);
+          }
+        }
+
         pollingAbortRef.current = null;
         setIsLoading(false);
       }
@@ -248,9 +261,11 @@ export default function Home() {
       const taskId =
         result.task_id ||
         (typeof result.request_id === "string" ? result.request_id : undefined);
+      const lockId =
+        typeof result.lock_id === "string" ? result.lock_id : undefined;
 
       if (taskId) {
-        void pollVideoResult(taskId);
+        void pollVideoResult(taskId, lockId);
         return;
       }
 

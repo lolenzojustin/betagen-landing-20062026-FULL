@@ -1,6 +1,7 @@
 export interface VideoTaskResponse {
   success: boolean;
   task_id?: string;
+  lock_id?: string;
   status?: string;
   video_url?: string;
   error?: string;
@@ -56,12 +57,31 @@ export async function createVideo(
 
 export async function checkVideo(
   taskId: string,
+  lockId?: string,
   signal?: AbortSignal
 ): Promise<VideoTaskResponse> {
+  const params = new URLSearchParams({
+    task_id: taskId,
+  });
+
+  if (lockId) {
+    params.set("lock_id", lockId);
+  }
+
   const res = await fetch(
-    `/api/check-video?task_id=${encodeURIComponent(taskId)}`,
+    `/api/check-video?${params.toString()}`,
     { signal }
   );
 
   return res.json();
+}
+
+export async function releaseVideoLock(lockId: string) {
+  await fetch("/api/video-lock/release", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ lock_id: lockId }),
+  });
 }

@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { refreshVideoLock } from "@/lib/video-lock.server";
 
 export const runtime = "nodejs";
 
 async function readN8nResponse(response: Response) {
   const contentType = response.headers.get("content-type") || "";
+  const responseText = await response.text();
 
   if (contentType.includes("application/json")) {
-    return response.json();
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return responseText;
+    }
   }
 
-  return response.text();
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return responseText;
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -58,6 +68,7 @@ export async function GET(req: NextRequest) {
   const taskId =
     req.nextUrl.searchParams.get("task_id") ||
     req.nextUrl.searchParams.get("request_id");
+  const lockId = req.nextUrl.searchParams.get("lock_id");
 
   if (!taskId) {
     return NextResponse.json(
@@ -74,6 +85,14 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    if (lockId) {
+      try {
+        await refreshVideoLock(lockId);
+      } catch (error) {
+        console.warn("Unable to refresh video lock before checking:", error);
+      }
+    }
+
     const n8nResponse = await fetch(process.env.N8N_CHECK_VIDEO_WEBHOOK, {
       method: "POST",
       headers: {
