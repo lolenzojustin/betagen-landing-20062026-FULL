@@ -22,9 +22,22 @@ function getVideoFileName(videoUrl: string) {
   return "betagen-video.mp4";
 }
 
+function isPhoneDevice() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent || "";
+
+  return /iPhone|Windows Phone|BlackBerry|IEMobile|Opera Mini|Android.+Mobile/i.test(
+    userAgent
+  );
+}
+
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSavedVideo, setHasSavedVideo] = useState(false);
+  const [isPhone] = useState(() => isPhoneDevice());
   const [saveError, setSaveError] = useState<string | null>(null);
   const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
   const fileName = getVideoFileName(videoUrl);
@@ -41,6 +54,11 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   };
 
   const handleSaveVideo = async () => {
+    if (!isPhone) {
+      fallbackDownload();
+      return;
+    }
+
     setIsSaving(true);
     setSaveError(null);
 
@@ -104,12 +122,18 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             disabled={isSaving}
             className="block w-full rounded-full bg-[#EA0029] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#c90024] disabled:cursor-wait disabled:opacity-75"
           >
-            {isSaving ? "Đang chuẩn bị video..." : "Tải video"}
+            {isSaving
+              ? "Đang chuẩn bị video..."
+              : isPhone
+                ? "Lưu video"
+                : "Tải video"}
           </button>
-          <p className="text-xs leading-snug text-[#354A93]/65">
-            Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save
-            Video để lưu vào thư viện ảnh.
-          </p>
+          {isPhone && (
+            <p className="text-xs leading-snug text-[#354A93]/65">
+              Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save
+              Video để lưu vào thư viện ảnh.
+            </p>
+          )}
           {hasSavedVideo && (
             <a
               href={videoUrl}
