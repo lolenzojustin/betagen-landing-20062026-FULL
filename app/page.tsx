@@ -618,24 +618,27 @@ export default function Home() {
           )}
 
           <div
-            className="absolute z-30 text-center"
+            className="absolute z-30 text-left"
             style={{
               left: "50%",
-              top: "500px",
+              top: "497px",
               transform: "translateX(-50%)",
-              width: "680px",
-              padding: "9px 18px 11px",
-              background: "rgba(235, 249, 255, 0.68)",
-              border: "1px solid rgba(255, 255, 255, 0.54)",
-              borderRadius: "18px",
-              boxShadow: "0 12px 28px rgba(53, 74, 147, 0.08)",
+              width: "720px",
+              padding: "13px 26px 14px",
+              background: "rgba(246, 252, 255, 0.74)",
+              border: "1px solid rgba(255, 255, 255, 0.72)",
+              borderRadius: "22px",
+              boxShadow: "0 14px 34px rgba(53, 74, 147, 0.1)",
             }}
           >
-            <p className="leading-tight text-black" style={{ fontSize: "22px" }}>
-              *Hình ảnh tải lên là hình ảnh chân dung, rõ nét
+            <p className="leading-tight text-black" style={{ fontSize: "19px" }}>
+              * Hình ảnh tải lên là hình ảnh chân dung, rõ nét
             </p>
-            <p className="leading-tight text-black" style={{ fontSize: "22px" }}>
-              *Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
+            <p className="mt-1 leading-tight text-black" style={{ fontSize: "19px" }}>
+              * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
+            </p>
+            <p className="mt-1 leading-tight text-black" style={{ fontSize: "19px" }}>
+              * Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
             </p>
           </div>
 
@@ -643,7 +646,7 @@ export default function Home() {
             className="absolute z-20"
             style={{
               left: "138px",
-              top: "610px",
+              top: "645px",
               width: "1088px",
             }}
           >
@@ -820,9 +823,10 @@ export default function Home() {
           )}
 
           <div className="responsive-video-note">
-            <p>*Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>
+            <p>* Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>
+            <p>* Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất</p>
             <p>
-              *Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
+              * Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
             </p>
           </div>
 
