@@ -632,7 +632,11 @@ export default function Home() {
             }}
           >
             <p className="leading-tight text-black" style={{ fontSize: "18px" }}>
-              * Hình ảnh tải lên là hình ảnh chân dung, rõ nét
+              * Hình ảnh tải lên là ảnh chân dung cá nhân, rõ nét
+              <br />
+              <span className="font-semibold text-[#354A93]">
+                (Không dùng ảnh có nhiều người hoặc nhiều khuôn mặt, ảnh mờ hoặc không rõ ràng)
+              </span>
             </p>
             <p className="mt-1 leading-tight text-black" style={{ fontSize: "18px" }}>
               * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
@@ -827,7 +831,12 @@ export default function Home() {
           )}
 
           <div className="responsive-video-note">
-            <p>* Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>
+            <p>
+              * Hình ảnh tải lên là ảnh chân dung cá nhân, rõ nét
+              <span className="block font-semibold text-[#354A93]">
+                (Không dùng ảnh có nhiều người hoặc nhiều khuôn mặt, ảnh mờ hoặc không rõ ràng)
+              </span>
+            </p>
             <p>
               * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
               <span className="block font-semibold text-[#354A93]">
