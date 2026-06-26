@@ -623,7 +623,7 @@ export default function Home() {
               left: "50%",
               top: "497px",
               transform: "translateX(-50%)",
-              width: "720px",
+              width: "780px",
               padding: "13px 26px 14px",
               background: "rgba(246, 252, 255, 0.74)",
               border: "1px solid rgba(255, 255, 255, 0.72)",
@@ -631,13 +631,17 @@ export default function Home() {
               boxShadow: "0 14px 34px rgba(53, 74, 147, 0.1)",
             }}
           >
-            <p className="leading-tight text-black" style={{ fontSize: "19px" }}>
+            <p className="leading-tight text-black" style={{ fontSize: "18px" }}>
               * Hình ảnh tải lên là hình ảnh chân dung, rõ nét
             </p>
-            <p className="mt-1 leading-tight text-black" style={{ fontSize: "19px" }}>
+            <p className="mt-1 leading-tight text-black" style={{ fontSize: "18px" }}>
               * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
+              <br />
+              <span className="font-semibold text-[#354A93]">
+                (Không nên gửi hình ảnh chỉ thấy mỗi khuôn mặt)
+              </span>
             </p>
-            <p className="mt-1 leading-tight text-black" style={{ fontSize: "19px" }}>
+            <p className="mt-1 leading-tight text-black" style={{ fontSize: "18px" }}>
               * Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
             </p>
           </div>
@@ -824,7 +828,12 @@ export default function Home() {
 
           <div className="responsive-video-note">
             <p>* Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>
-            <p>* Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất</p>
+            <p>
+              * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
+              <span className="block font-semibold text-[#354A93]">
+                (Không nên gửi hình ảnh chỉ thấy mỗi khuôn mặt)
+              </span>
+            </p>
             <p>
               * Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
             </p>
