@@ -111,7 +111,7 @@ export default function VideoPage() {
         <div className="text-left">
           <h1 className="text-2xl font-black leading-tight">Video đã sẵn sàng</h1>
           <p className="mt-2 text-sm font-semibold leading-snug text-[#354A93]/75">
-            Bấm phát video, sau đó dùng nút chia sẻ hoặc dấu ba chấm của trình duyệt để lưu video vào điện thoại.
+            Bấm Lưu video vào máy. Nếu bảng chia sẻ hiện ra, chọn Lưu video/Save Video. Nếu đang ở Facebook/Zalo mà không thấy mục lưu, bấm dấu ba chấm góc trên rồi chọn Mở bằng Safari và thử lại.
           </p>
         </div>
 
@@ -153,6 +153,10 @@ export default function VideoPage() {
             Không tìm thấy link video. Vui lòng quay lại trang trước và thử lại.
           </div>
         )}
+
+        <div className="rounded-2xl bg-white/55 px-4 py-3 text-left text-sm font-bold leading-snug text-[#354A93]">
+          Cách lưu nhanh trên iPhone: bấm nút đỏ, chọn Save Video nếu có. Nếu không có, mở trang này bằng Safari rồi bấm lại nút đỏ.
+        </div>
 
         <button
           type="button"

@@ -42,6 +42,16 @@ function isAppleDevice() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
 }
 
+function createTimeoutSignal(ms: number) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), ms);
+
+  return {
+    signal: controller.signal,
+    clear: () => window.clearTimeout(timeoutId),
+  };
+}
+
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSavedVideo, setHasSavedVideo] = useState(false);
@@ -77,17 +87,85 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
     setHasSavedVideo(true);
   };
 
-  const handleSaveVideo = () => {
+  const handleSaveVideo = async () => {
     setSaveError(null);
 
-    if (isPhone) {
-      openVideoInNewTab();
+    if (!isPhone) {
+      setIsSaving(true);
+      fallbackDownload();
+      window.setTimeout(() => setIsSaving(false), 800);
       return;
     }
 
     setIsSaving(true);
-    fallbackDownload();
-    window.setTimeout(() => setIsSaving(false), 800);
+
+    try {
+      const timeout = createTimeoutSignal(45_000);
+      let response: Response;
+
+      try {
+        response = await fetch(downloadUrl, {
+          cache: "no-store",
+          signal: timeout.signal,
+        });
+      } finally {
+        timeout.clear();
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to download video.");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], fileName, {
+        type: blob.type || "video/mp4",
+      });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Video Betagen",
+            text: "Video Betagen của bạn đã sẵn sàng.",
+          });
+        } catch (shareError) {
+          if (
+            shareError instanceof DOMException &&
+            shareError.name === "AbortError"
+          ) {
+            return;
+          }
+
+          throw shareError;
+        }
+
+        setHasSavedVideo(true);
+        setSaveError(
+          "Nếu bảng chia sẻ có mục Lưu video/Save Video, hãy chọn mục đó để lưu vào thư viện ảnh."
+        );
+        return;
+      }
+
+      setSaveError(
+        "Trình duyệt này chưa cho lưu trực tiếp. Đang mở trang lưu video dự phòng."
+      );
+      openVideoInNewTab();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setSaveError(
+          "Chuẩn bị file quá lâu. Đang mở trang lưu video dự phòng."
+        );
+      } else {
+        console.error("[Save Video] Unable to save video directly:", error);
+        setSaveError(
+          "Trình duyệt này chưa cho lưu trực tiếp. Đang mở trang lưu video dự phòng."
+        );
+      }
+
+      openVideoInNewTab();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -111,7 +189,7 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             className="block w-full rounded-full bg-[#EA0029] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#c90024] disabled:cursor-wait disabled:opacity-75"
           >
             {isSaving
-              ? "Đang chuẩn bị video..."
+              ? "Đang chuẩn bị file video..."
               : isPhone
                 ? "Lưu video vào máy"
                 : "Tải video"}
@@ -119,8 +197,8 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
           {isPhone && (
             <p className="text-xs leading-snug text-[#354A93]/65">
               {isApple
-                ? "Bấm nút trên để mở trang lưu video. Nếu đang ở Facebook/Zalo, chọn Mở bằng Safari nếu trình duyệt chưa cho lưu trực tiếp."
-                : "Bấm nút trên để mở trang lưu video và chọn Lưu video/Save Video nếu bảng chia sẻ hiện ra."}
+                ? "Bấm nút trên để mở bảng lưu video. Nếu không hiện mục Lưu video, hãy mở bằng Safari rồi thử lại."
+                : "Bấm nút trên để mở bảng lưu video, sau đó chọn Lưu video/Save Video nếu có."}
             </p>
           )}
           {hasSavedVideo && (
