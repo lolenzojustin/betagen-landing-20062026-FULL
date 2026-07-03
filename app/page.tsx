@@ -32,12 +32,12 @@ import {
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 10_000;
-const MAX_POLLING_ATTEMPTS = 20;
+const MAX_POLLING_ATTEMPTS = 120;
 const VIDEO_BUSY_MESSAGE =
   "Đang có người tạo video, xin vui lòng đợi và thử lại.";
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
-const MAX_STORED_VIDEO_JOB_AGE_MS = 30 * 60 * 1000;
+const MAX_STORED_VIDEO_JOB_AGE_MS = 60 * 60 * 1000;
 
 type ActiveVideoJob = {
   taskId: string;
@@ -309,10 +309,22 @@ export default function Home() {
         const status =
           typeof result.status === "string" ? result.status.toUpperCase() : "";
 
-        if (status === "COMPLETED" && result.video_url) {
+        const isCompleted =
+          Boolean(result.video_url) &&
+          (!status || ["COMPLETED", "SUCCESS", "DONE"].includes(status));
+
+        if (isCompleted && result.video_url) {
           clearStoredVideoJob();
           setResultVideoUrl(result.video_url);
           setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
+          return;
+        }
+
+        if (status === "ERROR" || status === "TIMEOUT") {
+          clearStoredVideoJob();
+          setErrorMessage(
+            result.error || "Không thể tạo video. Vui lòng thử lại."
+          );
           return;
         }
 
@@ -325,14 +337,6 @@ export default function Home() {
           };
           saveStoredVideoJob(currentJob);
           continue;
-        }
-
-        if (status === "ERROR") {
-          clearStoredVideoJob();
-          setErrorMessage(
-            result.error || "Không thể tạo video. Vui lòng thử lại."
-          );
-          return;
         }
 
         currentJob = {

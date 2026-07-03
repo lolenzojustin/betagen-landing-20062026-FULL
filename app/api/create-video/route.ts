@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import {
   acquireVideoLock,
   isVideoLockConfigured,
   releaseVideoLock,
 } from "@/lib/video-lock.server";
+import { pollVideoResultInBackground } from "@/lib/video-result.server";
 
 export const runtime = "nodejs";
 const CREATE_VIDEO_SYSTEM_ERROR =
@@ -134,6 +136,13 @@ export async function POST(req: NextRequest) {
       const requestId = getOptionalString(createVideoResult.request_id);
 
       if (requestId) {
+        after(async () => {
+          await pollVideoResultInBackground({
+            taskId: requestId,
+            lockId: lockOwnerId,
+          });
+        });
+
         return NextResponse.json({
           ...createVideoResult,
           success: true,

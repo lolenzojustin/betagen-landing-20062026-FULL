@@ -1,67 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { refreshVideoLock } from "@/lib/video-lock.server";
+import { refreshVideoLock, releaseVideoLock } from "@/lib/video-lock.server";
+import {
+  checkN8nVideoStatus,
+  getStoredVideoResult,
+  isTerminalVideoResult,
+  normalizeN8nResponse,
+  saveStoredVideoResult,
+  type StoredVideoResult,
+} from "@/lib/video-result.server";
 
 export const runtime = "nodejs";
 
-async function readN8nResponse(response: Response) {
-  const contentType = response.headers.get("content-type") || "";
-  const responseText = await response.text();
-
-  if (contentType.includes("application/json")) {
-    try {
-      return JSON.parse(responseText);
-    } catch {
-      return responseText;
-    }
-  }
-
-  try {
-    return JSON.parse(responseText);
-  } catch {
-    return responseText;
-  }
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function getNestedVideoUrl(value: Record<string, unknown>) {
-  const videoUrl = value.video_url;
-  if (typeof videoUrl === "string") {
-    return videoUrl;
-  }
-
-  const video = value.video;
-  if (!isRecord(video)) {
-    return undefined;
-  }
-
-  const url = video.url;
-  return typeof url === "string" ? url : undefined;
-}
-
-function normalizeVideoResult(value: Record<string, unknown>, raw?: unknown) {
-  const videoUrl = getNestedVideoUrl(value);
-
-  return {
-    ...value,
-    ...(videoUrl ? { video_url: videoUrl } : {}),
-    ...(raw ? { n8n_response: raw } : {}),
-  };
-}
-
-function normalizeN8nResponse(value: unknown) {
-  if (isRecord(value)) {
-    return normalizeVideoResult(value);
-  }
-
-  if (Array.isArray(value)) {
-    const firstItem = value[0];
-    return isRecord(firstItem) ? normalizeVideoResult(firstItem, value) : value;
-  }
-
-  return value;
 }
 
 export async function GET(req: NextRequest) {
@@ -85,6 +36,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const storedResult = await getStoredVideoResult(taskId);
+
+    if (storedResult && isTerminalVideoResult(storedResult)) {
+      return NextResponse.json(storedResult);
+    }
+
     if (lockId) {
       try {
         await refreshVideoLock(lockId);
@@ -93,32 +50,33 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const n8nResponse = await fetch(process.env.N8N_CHECK_VIDEO_WEBHOOK, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ request_id: taskId }),
-      cache: "no-store",
-    });
-    const n8nData = await readN8nResponse(n8nResponse);
-
-    if (!n8nResponse.ok) {
-      return NextResponse.json(
-        {
-          success: false,
+    const n8nData = await checkN8nVideoStatus(taskId);
+    const normalizedResult = normalizeN8nResponse(n8nData);
+    const responseResult = isRecord(normalizedResult)
+      ? ({
+          ...normalizedResult,
+          success: normalizedResult.success !== false,
           task_id: taskId,
-          status: "error",
-          video_url: "",
-          error: "n8n check-video webhook request failed",
-          n8n_status: n8nResponse.status,
+          ...(lockId ? { lock_id: lockId } : {}),
+          status:
+            typeof normalizedResult.status === "string"
+              ? normalizedResult.status.toUpperCase()
+              : "PROCESSING",
+          updated_at: Date.now(),
           n8n_response: n8nData,
-        },
-        { status: 502 }
-      );
+        } satisfies StoredVideoResult)
+      : normalizedResult;
+
+    if (isRecord(responseResult)) {
+      const storedVideoResult = responseResult as StoredVideoResult;
+      await saveStoredVideoResult(storedVideoResult);
+
+      if (lockId && isTerminalVideoResult(storedVideoResult)) {
+        await releaseVideoLock(lockId);
+      }
     }
 
-    return NextResponse.json(normalizeN8nResponse(n8nData));
+    return NextResponse.json(responseResult);
   } catch (error) {
     console.error("Error checking video task:", error);
 
