@@ -34,12 +34,22 @@ function isPhoneDevice() {
   );
 }
 
+function isAppleDevice() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+}
+
 export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSavedVideo, setHasSavedVideo] = useState(false);
   const [isPhone] = useState(() => isPhoneDevice());
+  const [isApple] = useState(() => isAppleDevice());
   const [saveError, setSaveError] = useState<string | null>(null);
   const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
+  const mobileVideoPageUrl = `/video?url=${encodeURIComponent(videoUrl)}`;
   const fileName = getVideoFileName(videoUrl);
 
   const fallbackDownload = () => {
@@ -53,53 +63,31 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
     setHasSavedVideo(true);
   };
 
-  const handleSaveVideo = async () => {
-    if (!isPhone) {
-      fallbackDownload();
+  const openVideoInNewTab = () => {
+    const openedWindow = window.open(
+      mobileVideoPageUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    if (!openedWindow) {
+      window.location.href = mobileVideoPageUrl;
+    }
+
+    setHasSavedVideo(true);
+  };
+
+  const handleSaveVideo = () => {
+    setSaveError(null);
+
+    if (isPhone) {
+      openVideoInNewTab();
       return;
     }
 
     setIsSaving(true);
-    setSaveError(null);
-
-    try {
-      const response = await fetch(downloadUrl, {
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Unable to download video.");
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], fileName, {
-        type: blob.type || "video/mp4",
-      });
-
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "Betagen video",
-          text: "Video Betagen của bạn đã sẵn sàng.",
-        });
-        setHasSavedVideo(true);
-        return;
-      }
-
-      fallbackDownload();
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-
-      console.error("[Save Video] Unable to save video:", error);
-      setSaveError(
-        "Trình duyệt chưa cho lưu trực tiếp. Nếu video mở lên, hãy bấm nút chia sẻ hoặc dấu ba chấm rồi chọn Lưu video."
-      );
-      fallbackDownload();
-    } finally {
-      setIsSaving(false);
-    }
+    fallbackDownload();
+    window.setTimeout(() => setIsSaving(false), 800);
   };
 
   return (
@@ -125,24 +113,33 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             {isSaving
               ? "Đang chuẩn bị video..."
               : isPhone
-                ? "Lưu video"
+                ? "Mở video để lưu"
                 : "Tải video"}
           </button>
           {isPhone && (
             <p className="text-xs leading-snug text-[#354A93]/65">
-              Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save
-              Video để lưu vào thư viện ảnh.
+              {isApple
+                ? "Trên iPhone, video sẽ mở ở trang mới. Bấm nút chia sẻ rồi chọn Lưu video/Save Video để lưu vào thư viện ảnh."
+                : "Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save Video để lưu vào thư viện ảnh."}
             </p>
           )}
           {hasSavedVideo && (
             <a
-              href={videoUrl}
+              href={isPhone ? mobileVideoPageUrl : videoUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full rounded-full bg-[#354A93] py-3 text-center text-base font-bold text-white transition-colors hover:bg-[#2b3d7d]"
             >
               Bấm để xem video
             </a>
+          )}
+          {isPhone && (
+            <button
+              onClick={openVideoInNewTab}
+              className="w-full rounded-full border border-[#354A93]/35 py-3 text-base font-bold text-[#354A93] transition-colors hover:bg-[#354A93]/5"
+            >
+              Mở lại link video
+            </button>
           )}
           {saveError && (
             <p className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold leading-snug text-[#EA0029]">
