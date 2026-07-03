@@ -113,14 +113,14 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             {isSaving
               ? "Đang chuẩn bị video..."
               : isPhone
-                ? "Mở video để lưu"
+                ? "Lưu video vào máy"
                 : "Tải video"}
           </button>
           {isPhone && (
             <p className="text-xs leading-snug text-[#354A93]/65">
               {isApple
-                ? "Trên iPhone, video sẽ mở ở trang mới. Bấm nút chia sẻ rồi chọn Lưu video/Save Video để lưu vào thư viện ảnh."
-                : "Trên điện thoại, nếu hiện bảng chia sẻ, hãy chọn Lưu video/Save Video để lưu vào thư viện ảnh."}
+                ? "Bấm nút trên để mở trang lưu video. Nếu đang ở Facebook/Zalo, chọn Mở bằng Safari nếu trình duyệt chưa cho lưu trực tiếp."
+                : "Bấm nút trên để mở trang lưu video và chọn Lưu video/Save Video nếu bảng chia sẻ hiện ra."}
             </p>
           )}
           {hasSavedVideo && (
