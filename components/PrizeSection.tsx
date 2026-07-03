@@ -8,33 +8,33 @@ const prizes = [
     name: "Tai nghe\nBluetooth chụp\ntai Beats Solo 4",
     image: "/images/03-section-prize-note/prize-headphone.png",
     alt: "Tai nghe Bluetooth chụp tai Beats Solo 4",
-    card: { left: 20, top: 55, width: 390, height: 150 },
-    number: { left: 20, top: 34, size: 68 },
-    text: { left: 96, top: 36, width: 170 },
-    gift: { left: -19, top: 124, size: 46 },
-    imageBox: { left: 235, top: -42, width: 175 },
+    card: { left: 12, top: 42, width: 398, height: 166 },
+    number: { left: 28, top: 45, size: 70 },
+    text: { left: 110, top: 46, width: 178 },
+    gift: { left: -12, top: 136, size: 48 },
+    imageBox: { left: 242, top: -34, width: 178 },
   },
   {
     count: "1",
     name: "Nồi chiên\nkhông dầu\nPhilips",
     image: "/images/03-section-prize-note/prize-rice-cooker.png",
     alt: "Nồi chiên không dầu Philips",
-    card: { left: 455, top: 55, width: 450, height: 150 },
-    number: { left: 28, top: 44, size: 62 },
-    text: { left: 108, top: 46, width: 150 },
-    gift: { left: -14, top: 124, size: 46 },
-    imageBox: { left: 226, top: -28, width: 218 },
+    card: { left: 445, top: 42, width: 452, height: 166 },
+    number: { left: 34, top: 50, size: 66 },
+    text: { left: 116, top: 52, width: 156 },
+    gift: { left: -12, top: 136, size: 48 },
+    imageBox: { left: 230, top: -18, width: 214 },
   },
   {
     count: "3",
     name: "Máy xay sinh tố\ncầm tay Bear",
     image: "/images/03-section-prize-note/prize-blender.png",
     alt: "Máy xay sinh tố cầm tay Bear",
-    card: { left: 910, top: 55, width: 376, height: 150 },
-    number: { left: 27, top: 35, size: 70 },
-    text: { left: 102, top: 56, width: 175 },
-    gift: { left: -13, top: 124, size: 46 },
-    imageBox: { left: 246, top: -55, width: 150 },
+    card: { left: 910, top: 42, width: 370, height: 166 },
+    number: { left: 30, top: 46, size: 72 },
+    text: { left: 110, top: 62, width: 174 },
+    gift: { left: -12, top: 136, size: 48 },
+    imageBox: { left: 250, top: -44, width: 152 },
   },
 ];
 
@@ -57,7 +57,10 @@ export default function PrizeSection() {
             style={{
               border: "1px solid rgba(255, 255, 255, 0.82)",
               borderRadius: "19px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.08) 100%)",
+              boxShadow:
+                "0 12px 30px rgba(53, 74, 147, 0.08), inset 0 1px 0 rgba(255,255,255,0.42)",
             }}
           />
 
@@ -78,7 +81,7 @@ export default function PrizeSection() {
               left: `${prize.text.left}px`,
               top: `${prize.text.top}px`,
               width: `${prize.text.width}px`,
-              fontSize: "17px",
+              fontSize: "18px",
             }}
           >
             {prize.name}

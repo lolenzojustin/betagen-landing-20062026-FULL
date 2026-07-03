@@ -61,11 +61,11 @@ body {
 }
 
 .section2-desktop {
-  height: calc(1030px * var(--canvas-scale));
+  height: calc(955px * var(--canvas-scale));
 }
 
 .section2-stage {
-  height: 1030px;
+  height: 955px;
 }
 
 .responsive-layout {
@@ -378,8 +378,8 @@ body {
         rgba(132, 217, 251, 0) 76%
       ),
       linear-gradient(180deg, #84d9fb 0%, #a9e4fa 18%, #beebfd 54%, #84d9fb 100%);
-    padding-top: 46px;
-    padding-bottom: 52px;
+    padding-top: 38px;
+    padding-bottom: 56px;
   }
 
   .responsive-prize-wave {
@@ -400,27 +400,35 @@ body {
 
   .responsive-prize > h2 {
     max-width: 720px;
-    margin: 0 auto 26px;
-    font-size: clamp(28px, 6.2vw, 40px);
+    margin: 0 auto 18px;
+    font-size: clamp(30px, 6.4vw, 42px);
+    text-align: left;
+    text-wrap: balance;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.38);
   }
 
   .responsive-prize-grid {
     display: grid;
     width: min(100%, 760px);
     margin: 0 auto;
-    gap: 16px;
+    gap: 14px;
   }
 
   .responsive-prize-card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(104px, auto);
     align-items: center;
-    min-height: 142px;
+    min-height: 152px;
     border: 1px solid rgba(255, 255, 255, 0.82);
     border-radius: 18px;
-    padding: 16px 16px 14px 20px;
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 12px 28px rgba(53, 74, 147, 0.08);
+    padding: 16px 14px 14px 18px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.48) 0%,
+      rgba(255, 255, 255, 0.22) 100%
+    );
+    box-shadow: 0 14px 32px rgba(53, 74, 147, 0.1);
+    overflow: hidden;
   }
 
   .responsive-prize-card span {
@@ -432,12 +440,12 @@ body {
 
   .responsive-prize-card p {
     margin-top: 8px;
-    max-width: 260px;
+    max-width: 280px;
     min-width: 0;
     color: #354a93;
     font-size: clamp(15px, 3.5vw, 19px);
     font-weight: 900;
-    line-height: 1.15;
+    line-height: 1.18;
     overflow-wrap: anywhere;
   }
 
@@ -447,7 +455,8 @@ body {
   }
 
   .responsive-prize-image {
-    width: clamp(106px, 26vw, 176px);
+    justify-self: end;
+    width: clamp(112px, 26vw, 176px);
     max-height: 210px;
     object-fit: contain;
   }
@@ -595,9 +604,10 @@ body {
   }
 
   .responsive-prize > h2 {
-    font-size: clamp(24px, 6.2vw, 30px);
+    font-size: clamp(28px, 7.4vw, 34px);
     line-height: 1.1;
     overflow-wrap: anywhere;
+    margin-bottom: 18px;
   }
 
   .responsive-video-note {
@@ -633,9 +643,9 @@ body {
   }
 
   .responsive-prize-card {
-    grid-template-columns: 1fr;
-    min-height: 0;
-    padding: 16px 18px 18px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 136px;
+    padding: 14px 12px 12px 16px;
   }
 
   .responsive-prize-card p {
@@ -643,9 +653,10 @@ body {
   }
 
   .responsive-prize-image {
-    justify-self: center;
-    width: min(58vw, 180px);
-    margin-top: 12px;
+    justify-self: end;
+    width: min(32vw, 130px);
+    max-height: 150px;
+    margin-top: 0;
   }
 
   .responsive-note p {
@@ -681,7 +692,7 @@ body {
   .responsive-prize-card:last-child {
     grid-column: 1 / -1;
     justify-self: center;
-    width: min(100%, 520px);
+    width: min(100%, 560px);
   }
 
   .responsive-note {

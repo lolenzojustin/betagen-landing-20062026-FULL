@@ -698,11 +698,14 @@ export default function Home() {
 
           <div
             className="absolute z-20"
-            style={{ left: "89px", top: "76px" }}
+            style={{ left: "88px", top: "56px", width: "1280px" }}
           >
             <h2
               className="font-black leading-none text-[#354A93]"
-              style={{ fontSize: "34px" }}
+              style={{
+                fontSize: "42px",
+                textShadow: "0 3px 0 rgba(255,255,255,0.34)",
+              }}
             >
               GIẢI THƯỞNG HẤP DẪN
             </h2>
@@ -713,7 +716,7 @@ export default function Home() {
             className="absolute z-20"
             style={{
               left: "80px",
-              top: "180px",
+              top: "142px",
               width: "1280px",
               height: "270px",
             }}
@@ -725,7 +728,7 @@ export default function Home() {
             className="absolute z-20"
             style={{
               left: "80px",
-              top: "531px",
+              top: "500px",
               width: "780px",
             }}
           >
