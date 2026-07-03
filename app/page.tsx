@@ -25,8 +25,9 @@ import {
   uploadImageToFreeImage,
 } from "@/lib/api";
 import {
+  getImageUploadValidationError,
   IMAGE_UPLOAD_ACCEPT,
-  isAcceptedImageUpload,
+  normalizeImageForUpload,
 } from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
@@ -221,7 +222,14 @@ export default function Home() {
   const handleUploadFile = useCallback(
     (file?: File | null) => {
       if (!file) return;
-      if (!isAcceptedImageUpload(file)) return;
+      const validationError = getImageUploadValidationError(file);
+
+      if (validationError) {
+        setErrorMessage(validationError);
+        setSuccessMessage(null);
+        return;
+      }
+
       handleFileSelected(file);
     },
     [handleFileSelected],
@@ -410,7 +418,8 @@ export default function Home() {
       let imageUrl: string;
 
       try {
-        imageUrl = await uploadImageToFreeImage(selectedFile);
+        const uploadFile = await normalizeImageForUpload(selectedFile);
+        imageUrl = await uploadImageToFreeImage(uploadFile);
         console.log("uploaded image_url", imageUrl);
       } catch (error) {
         if (requestIdRef.current !== requestId) {
@@ -418,7 +427,11 @@ export default function Home() {
         }
 
         console.error("[FreeImage Upload] Upload error:", error);
-        setErrorMessage("Không upload được ảnh, vui lòng thử lại.");
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Không upload được ảnh, vui lòng thử lại."
+        );
         setIsLoading(false);
         return;
       }
@@ -563,6 +576,7 @@ export default function Home() {
             <VideoTemplateBox
               templateVideoUrl={TEMPLATE_VIDEO_URL}
               onFileSelected={handleFileSelected}
+              onInvalidFile={setErrorMessage}
               previewUrl={selectedImage}
             />
           </div>
@@ -797,6 +811,7 @@ export default function Home() {
             <VideoTemplateBox
               templateVideoUrl={TEMPLATE_VIDEO_URL}
               onFileSelected={handleFileSelected}
+              onInvalidFile={setErrorMessage}
               previewUrl={selectedImage}
             />
           </div>

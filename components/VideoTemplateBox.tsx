@@ -3,19 +3,21 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import {
+  getImageUploadValidationError,
   IMAGE_UPLOAD_ACCEPT,
-  isAcceptedImageUpload,
 } from "@/lib/image-upload";
 
 interface VideoTemplateBoxProps {
   templateVideoUrl: string;
   onFileSelected: (file: File) => void;
+  onInvalidFile?: (message: string) => void;
   previewUrl?: string | null;
 }
 
 export default function VideoTemplateBox({
   templateVideoUrl,
   onFileSelected,
+  onInvalidFile,
   previewUrl,
 }: VideoTemplateBoxProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -26,7 +28,12 @@ export default function VideoTemplateBox({
 
   const handleFile = (file?: File | null) => {
     if (!file) return;
-    if (!isAcceptedImageUpload(file)) return;
+    const validationError = getImageUploadValidationError(file);
+
+    if (validationError) {
+      onInvalidFile?.(validationError);
+      return;
+    }
 
     onFileSelected(file);
   };

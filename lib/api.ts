@@ -23,6 +23,20 @@ interface FreeImageUploadResponse {
   [key: string]: unknown;
 }
 
+async function readUploadResponse(res: Response) {
+  try {
+    return (await res.json()) as FreeImageUploadResponse;
+  } catch {
+    return {
+      success: false,
+      error:
+        res.status === 413
+          ? "Ảnh quá nặng. Vui lòng chọn ảnh nhẹ hơn hoặc thử lại bằng ảnh JPG rõ nét."
+          : "Không upload được ảnh. Vui lòng thử lại bằng ảnh JPG/PNG rõ nét.",
+    };
+  }
+}
+
 export async function uploadImageToFreeImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("source", file);
@@ -32,7 +46,7 @@ export async function uploadImageToFreeImage(file: File): Promise<string> {
     body: formData,
   });
 
-  const data = (await res.json()) as FreeImageUploadResponse;
+  const data = await readUploadResponse(res);
 
   if (!res.ok || !data.success || !data.image_url) {
     throw new Error(data.error || "Unable to upload image.");

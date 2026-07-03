@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Courier New", Consolas, monospace;
+}
+
 @theme inline {
   --color-betagen-red: #EA0029;
   --color-betagen-navy: #354A93;

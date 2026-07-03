@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const FREEIMAGE_UPLOAD_URL = "https://freeimage.host/api/1/upload";
+const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
+const SERVER_ACCEPTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/webp",
+]);
 
 export const runtime = "nodejs";
 
@@ -54,6 +62,28 @@ export async function POST(req: NextRequest) {
     if (!(source instanceof File)) {
       return NextResponse.json(
         { success: false, error: "Missing image file" },
+        { status: 400 }
+      );
+    }
+
+    if (source.size > MAX_SERVER_UPLOAD_BYTES) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Ảnh quá nặng. Vui lòng chọn ảnh nhẹ hơn hoặc thử lại bằng ảnh JPG rõ nét.",
+        },
+        { status: 413 }
+      );
+    }
+
+    if (!SERVER_ACCEPTED_IMAGE_TYPES.has(source.type.toLowerCase())) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Định dạng ảnh chưa được hỗ trợ. Vui lòng chọn ảnh JPG, PNG hoặc WEBP.",
+        },
         { status: 400 }
       );
     }
