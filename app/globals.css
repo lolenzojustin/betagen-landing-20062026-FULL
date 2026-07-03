@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    sans-serif;
   --font-geist-mono: "Courier New", Consolas, monospace;
 }
 
@@ -21,7 +22,7 @@
 }
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -29,10 +30,30 @@ body {
   background: #84D9FB;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 html,
 body {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+.betagen-heading {
+  font-family: var(--font-geist-sans);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-shadow: none;
+  text-rendering: geometricPrecision;
+}
+
+.betagen-strong {
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .page-canvas {
@@ -195,9 +216,9 @@ body {
   .responsive-hero-copy h1 {
     color: #fff;
     font-size: clamp(30px, 8.2vw, 58px);
-    font-weight: 950;
+    font-weight: 800;
     line-height: 1.06;
-    text-shadow: 0 2px 14px rgba(53, 74, 147, 0.12);
+    text-shadow: none;
   }
 
   .responsive-hero-copy p {
@@ -319,7 +340,8 @@ body {
   .responsive-prize > h2,
   .responsive-note h2 {
     color: #354a93;
-    font-weight: 950;
+    font-weight: 800;
+    letter-spacing: 0;
     line-height: 1;
   }
 
@@ -404,7 +426,7 @@ body {
     font-size: clamp(30px, 6.4vw, 42px);
     text-align: left;
     text-wrap: balance;
-    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.38);
+    text-shadow: none;
   }
 
   .responsive-prize-grid {
@@ -434,7 +456,7 @@ body {
   .responsive-prize-card span {
     color: #ea0029;
     font-size: clamp(46px, 11vw, 68px);
-    font-weight: 950;
+    font-weight: 800;
     line-height: 0.86;
   }
 
@@ -444,7 +466,7 @@ body {
     min-width: 0;
     color: #354a93;
     font-size: clamp(15px, 3.5vw, 19px);
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.18;
     overflow-wrap: anywhere;
   }

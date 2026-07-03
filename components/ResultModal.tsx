@@ -176,7 +176,7 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h3 className="mb-2 text-xl font-black text-[#354A93]">
+        <h3 className="betagen-heading mb-2 text-xl text-[#354A93]">
           Video đã sẵn sàng!
         </h3>
         <p className="mb-6 text-sm text-[#354A93]/70">

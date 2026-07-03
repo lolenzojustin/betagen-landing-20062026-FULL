@@ -701,10 +701,9 @@ export default function Home() {
             style={{ left: "88px", top: "56px", width: "1280px" }}
           >
             <h2
-              className="font-black leading-none text-[#354A93]"
+              className="betagen-heading leading-none text-[#354A93]"
               style={{
                 fontSize: "42px",
-                textShadow: "0 3px 0 rgba(255,255,255,0.34)",
               }}
             >
               GIẢI THƯỞNG HẤP DẪN
@@ -919,7 +918,7 @@ export default function Home() {
                 "/images/03-section-prize-note/prize-headphone.png",
               ],
               [
-                "1",
+                "2",
                 "Nồi chiên không dầu Philips",
                 "/images/03-section-prize-note/prize-rice-cooker.png",
               ],

@@ -109,7 +109,7 @@ export default function VideoPage() {
     <main className="min-h-screen bg-[#BEEBFD] px-5 py-8 text-center text-[#354A93]">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-xl flex-col justify-center gap-5">
         <div className="text-left">
-          <h1 className="text-2xl font-black leading-tight">Video đã sẵn sàng</h1>
+          <h1 className="betagen-heading text-2xl leading-tight">Video đã sẵn sàng</h1>
           <p className="mt-2 text-sm font-semibold leading-snug text-[#354A93]/75">
             Bấm Lưu video vào máy. Nếu bảng chia sẻ hiện ra, chọn Lưu video/Save Video. Nếu đang ở Facebook/Zalo mà không thấy mục lưu, bấm dấu ba chấm góc trên rồi chọn Mở bằng Safari và thử lại.
           </p>
@@ -128,7 +128,7 @@ export default function VideoPage() {
               type="button"
               onClick={handleSaveVideo}
               disabled={isSaving}
-              className="rounded-full bg-[#EA0029] px-6 py-4 text-base font-black text-white shadow-[0_12px_28px_rgba(234,0,41,0.2)] disabled:cursor-wait disabled:opacity-75"
+              className="betagen-strong rounded-full bg-[#EA0029] px-6 py-4 text-base text-white shadow-[0_12px_28px_rgba(234,0,41,0.2)] disabled:cursor-wait disabled:opacity-75"
             >
               {isSaving ? "Đang chuẩn bị file video..." : "Lưu video vào máy"}
             </button>
@@ -137,7 +137,7 @@ export default function VideoPage() {
               href={downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full bg-white/70 px-6 py-4 text-base font-black text-[#354A93] shadow-[0_10px_24px_rgba(53,74,147,0.1)]"
+              className="betagen-strong rounded-full bg-white/70 px-6 py-4 text-base text-[#354A93] shadow-[0_10px_24px_rgba(53,74,147,0.1)]"
             >
               Tải bằng trình duyệt
             </a>
@@ -161,7 +161,7 @@ export default function VideoPage() {
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="rounded-full border border-[#354A93] px-6 py-4 text-base font-black text-[#354A93]"
+          className="betagen-strong rounded-full border border-[#354A93] px-6 py-4 text-base text-[#354A93]"
         >
           Quay lại
         </button>

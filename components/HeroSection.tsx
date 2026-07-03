@@ -80,10 +80,9 @@ export default function HeroSection({
           style={{ left: "810px", top: "183px", width: "575px" }}
         >
           <h1
-            className="text-center font-black leading-[1.16] text-white"
+            className="betagen-heading text-center leading-[1.16] text-white"
             style={{
               fontSize: "43px",
-              textShadow: "0 2px 16px rgba(0,0,0,0.1)",
               whiteSpace: "nowrap",
             }}
           >
@@ -106,7 +105,7 @@ export default function HeroSection({
 
           <button
             onClick={onCreateVideo}
-            className="mt-9 flex h-[42px] w-[198px] items-center justify-center gap-2 rounded-full bg-[#EA0029] font-black text-white transition-transform hover:scale-105 active:scale-95"
+            className="betagen-strong mt-9 flex h-[42px] w-[198px] items-center justify-center gap-2 rounded-full bg-[#EA0029] text-white transition-transform hover:scale-105 active:scale-95"
             style={{ fontSize: "14px" }}
           >
             <svg

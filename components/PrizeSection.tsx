@@ -15,7 +15,7 @@ const prizes = [
     imageBox: { left: 242, top: -34, width: 178 },
   },
   {
-    count: "1",
+    count: "2",
     name: "Nồi chiên\nkhông dầu\nPhilips",
     image: "/images/03-section-prize-note/prize-rice-cooker.png",
     alt: "Nồi chiên không dầu Philips",
@@ -65,7 +65,7 @@ export default function PrizeSection() {
           />
 
           <span
-            className="absolute font-black leading-none text-[#EA0029]"
+            className="betagen-strong absolute leading-none text-[#EA0029]"
             style={{
               left: `${prize.number.left}px`,
               top: `${prize.number.top}px`,
@@ -76,7 +76,7 @@ export default function PrizeSection() {
           </span>
 
           <p
-            className="absolute whitespace-pre-line font-black leading-[1.18] text-[#354A93]"
+            className="betagen-strong absolute whitespace-pre-line leading-[1.18] text-[#354A93]"
             style={{
               left: `${prize.text.left}px`,
               top: `${prize.text.top}px`,

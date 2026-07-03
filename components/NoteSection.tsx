@@ -10,7 +10,7 @@ export default function NoteSection() {
   return (
     <div className="relative w-full">
       <h3
-        className="font-black leading-none text-[#354A93]"
+        className="betagen-heading leading-none text-[#354A93]"
         style={{ fontSize: "30px" }}
       >
         LƯU Ý

@@ -56,7 +56,7 @@ export default function RuleSection() {
       }}
     >
       <h3
-        className="font-black leading-none text-[#354A93]"
+        className="betagen-heading leading-none text-[#354A93]"
         style={{ fontSize: "39px", marginBottom: "27px" }}
       >
         THỂ LỆ
@@ -92,7 +92,7 @@ export default function RuleSection() {
               }}
             >
               <span
-                className="flex items-center justify-center rounded-full bg-[#EA0029] font-black leading-none text-white"
+                className="betagen-strong flex items-center justify-center rounded-full bg-[#EA0029] leading-none text-white"
                 style={{
                   width: "96px",
                   height: "29px",
