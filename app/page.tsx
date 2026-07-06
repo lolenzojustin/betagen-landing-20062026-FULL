@@ -752,7 +752,7 @@ export default function Home() {
           style={{ zIndex: 30 }}
         >
           <p className="text-sm font-medium tracking-[0.01em] text-white/85">
-            © 2026 Betagen. Chương trình VIVU Tốt Bụng 2026.
+            © 2026 Betagen. Chương trình Betagen Casting 2026.
           </p>
         </footer>
       </div>
@@ -786,13 +786,15 @@ export default function Home() {
 
           <div className="responsive-hero-copy">
             <h1>
-              VIVU TỐT BỤNG
+              BETAGEN CASTING
               <br />
-              TRÚNG QUÀ CỰC MÊ
+              DIỄN VIÊN -
+              <br />
+              TRÚNG NGAY QUÀ XỊN
             </h1>
             <p>
-              Tải ảnh chân dung, tạo video VIVU Tốt Bụng của riêng bạn và tham
-              gia chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
+              Tải ảnh chân dung, tạo video casting của riêng bạn và tham gia
+              chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
           </div>
@@ -965,7 +967,7 @@ export default function Home() {
         </section>
 
         <footer className="responsive-footer">
-          © 2026 Betagen. Chương trình VIVU Tốt Bụng 2026.
+          © 2026 Betagen. Chương trình Betagen Casting 2026.
         </footer>
       </div>
     </div>

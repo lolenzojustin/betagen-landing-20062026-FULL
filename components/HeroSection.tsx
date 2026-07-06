@@ -77,18 +77,18 @@ export default function HeroSection({
 
         <div
           className="absolute z-20 flex flex-col items-center"
-          style={{ left: "810px", top: "183px", width: "575px" }}
+          style={{ left: "770px", top: "176px", width: "650px" }}
         >
           <h1
             className="betagen-heading text-center leading-[1.16] text-white"
             style={{
-              fontSize: "43px",
+              fontSize: "36px",
               whiteSpace: "nowrap",
             }}
           >
-            VIVU TỐT BỤNG
+            BETAGEN CASTING DIỄN VIÊN -
             <br />
-            TRÚNG QUÀ CỰC MÊ
+            TRÚNG NGAY QUÀ XỊN
           </h1>
 
           <p
@@ -99,8 +99,8 @@ export default function HeroSection({
               maxWidth: "535px",
             }}
           >
-            Tải ảnh chân dung, tạo video VIVU Tốt Bụng của riêng bạn và tham
-            gia chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
+            Tải ảnh chân dung, tạo video casting của riêng bạn và tham gia
+            chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
           </p>
 
           <button

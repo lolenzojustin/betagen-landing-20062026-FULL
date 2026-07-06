@@ -2,8 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VIVU TỐT BỤNG - TRÚNG QUÀ CỰC MÊ | Betagen",
-  description: "Tham gia chương trình VIVU Tốt Bụng của Betagen, tạo video cá nhân hóa và trúng quà cực mê!",
+  title: "BETAGEN CASTING DIỄN VIÊN - TRÚNG NGAY QUÀ XỊN | Betagen",
+  description:
+    "Tham gia chương trình Betagen Casting, tạo video cá nhân hóa và nhận cơ hội trúng quà xịn từ Betagen!",
 };
 
 export const viewport: Viewport = {
