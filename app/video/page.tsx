@@ -155,7 +155,7 @@ export default function VideoPage() {
         )}
 
         <div className="rounded-2xl bg-white/55 px-4 py-3 text-left text-sm font-bold leading-snug text-[#354A93]">
-          Cách lưu nhanh trên iPhone: bấm nút đỏ, chọn Save Video nếu có. Nếu không có, mở trang này bằng Safari rồi bấm lại nút đỏ.
+          Cách lưu nhanh trên iPhone: bấm nút đỏ, chọn Lưu Video hoặc Save Video nếu có. Nếu không có, mở trang này bằng Safari rồi bấm lại nút đỏ.
         </div>
 
         <button
