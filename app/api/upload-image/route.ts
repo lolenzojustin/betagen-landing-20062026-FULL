@@ -313,13 +313,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let freeImageData: unknown = null;
-    let freeImageError = "";
+    let imgbbData: unknown = null;
+    let imgbbError = "";
+
+    if (process.env.IMGBB_API_KEY) {
+      const { response: imgbbResponse, data } = await uploadToImgbb(source);
+      imgbbData = data;
+
+      if (typeof imgbbData === "object" && imgbbData !== null) {
+        const imgbbUrl = getImgbbImageUrl(imgbbData as ImgbbUploadResponse);
+
+        if (imgbbResponse.ok && imgbbUrl) {
+          return NextResponse.json({
+            success: true,
+            image_url: imgbbUrl,
+            provider: "imgbb",
+            imgbb_response: imgbbData,
+          });
+        }
+      }
+
+      imgbbError =
+        getImgbbErrorMessage(imgbbData) || "Unable to upload image.";
+    }
 
     if (process.env.FREEIMAGE_API_KEY) {
-      const { response: freeImageResponse, data } =
+      const { response: freeImageResponse, data: freeImageData } =
         await uploadToFreeImage(source);
-      freeImageData = data;
 
       if (typeof freeImageData === "object" && freeImageData !== null) {
         const freeImageUrl = getUploadedImageUrl(
@@ -331,42 +351,21 @@ export async function POST(req: NextRequest) {
             success: true,
             image_url: freeImageUrl,
             provider: "freeimage",
-            freeimage_response: freeImageData,
-          });
-        }
-      }
-
-      freeImageError =
-        getFreeImageErrorMessage(freeImageData) || "Unable to upload image.";
-    }
-
-    if (process.env.IMGBB_API_KEY) {
-      const { response: imgbbResponse, data: imgbbData } =
-        await uploadToImgbb(source);
-
-      if (typeof imgbbData === "object" && imgbbData !== null) {
-        const imgbbUrl = getImgbbImageUrl(imgbbData as ImgbbUploadResponse);
-
-        if (imgbbResponse.ok && imgbbUrl) {
-          return NextResponse.json({
-            success: true,
-            image_url: imgbbUrl,
-            provider: "imgbb",
-            freeimage_response: freeImageData,
             imgbb_response: imgbbData,
+            freeimage_response: freeImageData,
           });
         }
       }
 
-      const imgbbError =
-        getImgbbErrorMessage(imgbbData) || "Unable to upload image.";
+      const freeImageError =
+        getFreeImageErrorMessage(freeImageData) || "Unable to upload image.";
 
       return NextResponse.json(
         {
           success: false,
-          error: getUserUploadError(imgbbError || freeImageError),
-          freeimage_response: freeImageData,
+          error: getUserUploadError(freeImageError || imgbbError),
           imgbb_response: imgbbData,
+          freeimage_response: freeImageData,
         },
         { status: 502 }
       );
@@ -375,8 +374,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: getUserUploadError(freeImageError),
-        freeimage_response: freeImageData,
+        error: getUserUploadError(imgbbError),
+        imgbb_response: imgbbData,
       },
       { status: 502 }
     );
