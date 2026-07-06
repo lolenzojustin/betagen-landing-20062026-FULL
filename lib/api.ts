@@ -37,6 +37,18 @@ async function readUploadResponse(res: Response) {
   }
 }
 
+function getUploadErrorMessage(error?: string) {
+  if (!error) {
+    return "Không upload được ảnh. Vui lòng thử lại bằng ảnh JPG/PNG rõ nét.";
+  }
+
+  if (/internal upload error|internal server error|unable to upload/i.test(error)) {
+    return "Hệ thống upload ảnh đang bận. Vui lòng bấm tạo video lại hoặc chọn ảnh JPG rõ nét khác.";
+  }
+
+  return error;
+}
+
 export async function uploadImageToFreeImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("source", file);
@@ -49,7 +61,7 @@ export async function uploadImageToFreeImage(file: File): Promise<string> {
   const data = await readUploadResponse(res);
 
   if (!res.ok || !data.success || !data.image_url) {
-    throw new Error(data.error || "Unable to upload image.");
+    throw new Error(getUploadErrorMessage(data.error));
   }
 
   return data.image_url;

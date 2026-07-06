@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const FREEIMAGE_UPLOAD_URL = "https://freeimage.host/api/1/upload";
 const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
+const FREEIMAGE_UPLOAD_ATTEMPTS = 2;
 const SERVER_ACCEPTED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
@@ -28,7 +29,9 @@ interface FreeImageUploadResponse {
   error?: {
     code?: number;
     message?: string;
-  };
+  } | string;
+  status_txt?: string;
+  status_code?: number;
   [key: string]: unknown;
 }
 
@@ -42,6 +45,58 @@ async function readFreeImageResponse(response: Response) {
   return response.text();
 }
 
+async function uploadToFreeImage(source: File) {
+  const imageBuffer = Buffer.from(await source.arrayBuffer());
+  const base64Image = imageBuffer.toString("base64");
+
+  let lastResponse: Response | null = null;
+  let lastData: unknown = null;
+
+  for (let attempt = 1; attempt <= FREEIMAGE_UPLOAD_ATTEMPTS; attempt += 1) {
+    const freeImageFormData = new FormData();
+    freeImageFormData.append("key", process.env.FREEIMAGE_API_KEY || "");
+    freeImageFormData.append("action", "upload");
+    freeImageFormData.append("format", "json");
+    freeImageFormData.append("source", base64Image);
+
+    lastResponse = await fetch(FREEIMAGE_UPLOAD_URL, {
+      method: "POST",
+      body: freeImageFormData,
+    });
+    lastData = await readFreeImageResponse(lastResponse);
+
+    const errorMessage = getFreeImageErrorMessage(lastData);
+
+    const shouldRetry =
+      attempt < FREEIMAGE_UPLOAD_ATTEMPTS &&
+      (!lastResponse.ok || /internal|temporary|try again/i.test(errorMessage));
+
+    if (!shouldRetry) {
+      break;
+    }
+  }
+
+  if (!lastResponse) {
+    throw new Error("FreeImage upload did not run.");
+  }
+
+  return { response: lastResponse, data: lastData };
+}
+
+function getFreeImageErrorMessage(response: unknown) {
+  if (typeof response !== "object" || response === null) {
+    return "";
+  }
+
+  const uploadResponse = response as FreeImageUploadResponse;
+
+  if (typeof uploadResponse.error === "string") {
+    return uploadResponse.error;
+  }
+
+  return uploadResponse.error?.message || uploadResponse.status_txt || "";
+}
+
 function getUploadedImageUrl(response: FreeImageUploadResponse) {
   return (
     response.data?.image?.url ||
@@ -52,6 +107,32 @@ function getUploadedImageUrl(response: FreeImageUploadResponse) {
     response.image?.url_viewer ||
     null
   );
+}
+
+function getUserUploadError(errorMessage?: string) {
+  if (!errorMessage) {
+    return "Không upload được ảnh, vui lòng thử lại bằng ảnh JPG rõ nét.";
+  }
+
+  const normalizedError = errorMessage.toLowerCase();
+
+  if (
+    normalizedError.includes("internal") ||
+    normalizedError.includes("temporary") ||
+    normalizedError.includes("try again")
+  ) {
+    return "Hệ thống upload ảnh đang bận. Vui lòng bấm tạo video lại hoặc chọn ảnh JPG rõ nét khác.";
+  }
+
+  if (
+    normalizedError.includes("invalid") ||
+    normalizedError.includes("unsupported") ||
+    normalizedError.includes("format")
+  ) {
+    return "Định dạng ảnh chưa được hỗ trợ. Vui lòng chọn ảnh JPG, PNG hoặc WEBP rõ nét.";
+  }
+
+  return errorMessage;
 }
 
 export async function POST(req: NextRequest) {
@@ -95,23 +176,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const freeImageFormData = new FormData();
-    freeImageFormData.append("key", process.env.FREEIMAGE_API_KEY);
-    freeImageFormData.append("action", "upload");
-    freeImageFormData.append("format", "json");
-    freeImageFormData.append("source", source);
-
-    const freeImageResponse = await fetch(FREEIMAGE_UPLOAD_URL, {
-      method: "POST",
-      body: freeImageFormData,
-    });
-    const freeImageData = await readFreeImageResponse(freeImageResponse);
+    const { response: freeImageResponse, data: freeImageData } =
+      await uploadToFreeImage(source);
 
     if (typeof freeImageData !== "object" || freeImageData === null) {
       return NextResponse.json(
         {
           success: false,
-          error: "FreeImage returned an invalid response.",
+          error: "Không upload được ảnh, vui lòng thử lại bằng ảnh JPG rõ nét.",
           freeimage_response: freeImageData,
         },
         { status: 502 }
@@ -124,13 +196,12 @@ export async function POST(req: NextRequest) {
 
     if (!freeImageResponse.ok || !imageUrl) {
       const errorMessage =
-        (freeImageData as FreeImageUploadResponse).error?.message ||
-        "Unable to upload image.";
+        getFreeImageErrorMessage(freeImageData) || "Unable to upload image.";
 
       return NextResponse.json(
         {
           success: false,
-          error: errorMessage,
+          error: getUserUploadError(errorMessage),
           freeimage_response: freeImageData,
         },
         { status: 502 }
@@ -146,7 +217,10 @@ export async function POST(req: NextRequest) {
     console.error("Error uploading image:", error);
 
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      {
+        success: false,
+        error: "Không upload được ảnh, vui lòng thử lại bằng ảnh JPG rõ nét.",
+      },
       { status: 500 }
     );
   }
