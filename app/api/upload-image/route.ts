@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const FREEIMAGE_UPLOAD_URL = "https://freeimage.host/api/1/upload";
 const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
 const FREEIMAGE_UPLOAD_ATTEMPTS = 2;
+const FREEIMAGE_UPLOAD_STRATEGIES = ["base64", "file"] as const;
 const SERVER_ACCEPTED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
@@ -52,26 +53,55 @@ async function uploadToFreeImage(source: File) {
   let lastResponse: Response | null = null;
   let lastData: unknown = null;
 
-  for (let attempt = 1; attempt <= FREEIMAGE_UPLOAD_ATTEMPTS; attempt += 1) {
-    const freeImageFormData = new FormData();
-    freeImageFormData.append("key", process.env.FREEIMAGE_API_KEY || "");
-    freeImageFormData.append("action", "upload");
-    freeImageFormData.append("format", "json");
-    freeImageFormData.append("source", base64Image);
+  for (const strategy of FREEIMAGE_UPLOAD_STRATEGIES) {
+    for (let attempt = 1; attempt <= FREEIMAGE_UPLOAD_ATTEMPTS; attempt += 1) {
+      const freeImageFormData = new FormData();
+      freeImageFormData.append("key", process.env.FREEIMAGE_API_KEY || "");
+      freeImageFormData.append("action", "upload");
+      freeImageFormData.append("format", "json");
 
-    lastResponse = await fetch(FREEIMAGE_UPLOAD_URL, {
-      method: "POST",
-      body: freeImageFormData,
-    });
-    lastData = await readFreeImageResponse(lastResponse);
+      if (strategy === "base64") {
+        freeImageFormData.append("source", base64Image);
+      } else {
+        freeImageFormData.append(
+          "source",
+          new Blob([imageBuffer], { type: source.type || "image/jpeg" }),
+          source.name || "betagen-upload.jpg"
+        );
+      }
 
-    const errorMessage = getFreeImageErrorMessage(lastData);
+      lastResponse = await fetch(FREEIMAGE_UPLOAD_URL, {
+        method: "POST",
+        body: freeImageFormData,
+      });
+      lastData = await readFreeImageResponse(lastResponse);
 
-    const shouldRetry =
-      attempt < FREEIMAGE_UPLOAD_ATTEMPTS &&
-      (!lastResponse.ok || /internal|temporary|try again/i.test(errorMessage));
+      if (
+        typeof lastData === "object" &&
+        lastData !== null &&
+        lastResponse.ok &&
+        getUploadedImageUrl(lastData as FreeImageUploadResponse)
+      ) {
+        return { response: lastResponse, data: lastData };
+      }
 
-    if (!shouldRetry) {
+      const errorMessage = getFreeImageErrorMessage(lastData);
+
+      const shouldRetry =
+        attempt < FREEIMAGE_UPLOAD_ATTEMPTS &&
+        (!lastResponse.ok || /internal|temporary|try again/i.test(errorMessage));
+
+      if (!shouldRetry) {
+        break;
+      }
+    }
+
+    if (
+      typeof lastData === "object" &&
+      lastData !== null &&
+      lastResponse?.ok &&
+      getUploadedImageUrl(lastData as FreeImageUploadResponse)
+    ) {
       break;
     }
   }
