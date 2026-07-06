@@ -672,7 +672,7 @@ export default function Home() {
             className="absolute z-20"
             style={{
               left: "138px",
-              top: "645px",
+              top: "680px",
               width: "1088px",
             }}
           >
@@ -752,7 +752,7 @@ export default function Home() {
           style={{ zIndex: 30 }}
         >
           <p className="text-sm font-medium tracking-[0.01em] text-white/85">
-            © 2026 Betagen. Chương trình Betagen Casting 2026.
+            2026 Betagen. BETAGEN CASTING DIỄN VIÊN - TRÚNG NGAY QUÀ XỊN
           </p>
         </footer>
       </div>
@@ -793,8 +793,13 @@ export default function Home() {
               TRÚNG NGAY QUÀ XỊN
             </h1>
             <p>
-              Tải ảnh chân dung, tạo video casting của riêng bạn và tham gia
-              chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
+              Betagen mở buổi thử vai, men tốt bụng đã sẵn sàng tham gia? Chỉ
+              cần gửi một bức ảnh chân dung, bạn sẽ bước vào TVC và hóa thân
+              thành diễn viên, đồng hành cùng bộ đôi tốt bụng Quang Hùng
+              MasterD và Khoai Lang Thang!
+              <span>
+                Thời gian diễn ra: Từ 01/07 - 15/07/2026.
+              </span>
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
           </div>
@@ -920,7 +925,7 @@ export default function Home() {
                 "/images/03-section-prize-note/prize-headphone.png",
               ],
               [
-                "2",
+                "1",
                 "Nồi chiên không dầu Philips",
                 "/images/03-section-prize-note/prize-rice-cooker.png",
               ],
@@ -956,18 +961,27 @@ export default function Home() {
           <div ref={responsiveNoteSectionRef} className="responsive-note">
             <h2>LƯU Ý</h2>
             <div>
-              <p>*Hình ảnh tải lên là hình ảnh chân dung, rõ nét</p>
-              <p>*Mỗi user chỉ được tối đa 2 lần tải lên hình ảnh</p>
               <p>
-                *Để video có hình ảnh đẹp, hình ảnh chân dung vui lòng mặc trang
-                phục lịch sự, màu sắc phù hợp với video ban đầu
+                * Hình ảnh tải lên là ảnh chân dung cá nhân, rõ nét
+                <span className="block font-semibold text-[#354A93]">
+                  (Không dùng ảnh có nhiều người hoặc nhiều khuôn mặt, ảnh mờ hoặc không rõ ràng)
+                </span>
+              </p>
+              <p>
+                * Nên dùng hình toàn thân hoặc nửa thân trên để gen video được chính xác nhất
+                <span className="block font-semibold text-[#354A93]">
+                  (Không nên gửi hình ảnh chỉ thấy mỗi khuôn mặt)
+                </span>
+              </p>
+              <p>
+                * Mỗi user chỉ được <strong>tối đa 2 lần</strong> tải lên hình ảnh
               </p>
             </div>
           </div>
         </section>
 
         <footer className="responsive-footer">
-          © 2026 Betagen. Chương trình Betagen Casting 2026.
+          2026 Betagen. BETAGEN CASTING DIỄN VIÊN - TRÚNG NGAY QUÀ XỊN
         </footer>
       </div>
     </div>

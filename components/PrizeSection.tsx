@@ -15,7 +15,7 @@ const prizes = [
     imageBox: { left: 242, top: -34, width: 178 },
   },
   {
-    count: "2",
+    count: "1",
     name: "Nồi chiên\nkhông dầu\nPhilips",
     image: "/images/03-section-prize-note/prize-rice-cooker.png",
     alt: "Nồi chiên không dầu Philips",

@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "BETAGEN CASTING DIỄN VIÊN - TRÚNG NGAY QUÀ XỊN | Betagen",
   description:
-    "Tham gia chương trình Betagen Casting, tạo video cá nhân hóa và nhận cơ hội trúng quà xịn từ Betagen!",
+    "Betagen mở buổi thử vai: gửi ảnh chân dung, bước vào TVC cùng Quang Hùng MasterD và Khoai Lang Thang, nhận cơ hội trúng quà xịn.",
 };
 
 export const viewport: Viewport = {

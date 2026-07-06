@@ -92,15 +92,21 @@ export default function HeroSection({
           </h1>
 
           <p
-            className="mt-6 text-center leading-[1.45]"
+            className="mt-5 text-center leading-[1.38]"
             style={{
-              fontSize: "16px",
+              fontSize: "15px",
               color: "#354A93",
-              maxWidth: "535px",
+              maxWidth: "620px",
             }}
           >
-            Tải ảnh chân dung, tạo video casting của riêng bạn và tham gia
-            chương trình nhận quà hấp dẫn từ Betagen trong năm 2026.
+            Betagen mở buổi thử vai, men tốt bụng đã sẵn sàng tham gia? Chỉ
+            cần gửi một bức ảnh chân dung, bạn sẽ bước vào TVC và hóa thân
+            thành diễn viên, đồng hành cùng bộ đôi tốt bụng Quang Hùng MasterD
+            và Khoai Lang Thang!
+            <br />
+            <span className="mt-2 inline-block font-semibold">
+              Thời gian diễn ra: Từ 01/07 - 15/07/2026.
+            </span>
           </p>
 
           <button
