@@ -35,7 +35,7 @@ const POLLING_INTERVAL_MS = 10_000;
 const MAX_POLLING_ATTEMPTS = 120;
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const VIDEO_START_COOLDOWN_MESSAGE =
-  "Hệ thống vừa nhận một lượt tạo video. Vui lòng thử lại sau khoảng 1 phút.";
+  "Hệ thống đang tạo video cho một khách khác. Bạn vui lòng chờ khoảng 1 phút rồi bấm tạo lại nhé.";
 const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
 const MAX_STORED_VIDEO_JOB_AGE_MS = 60 * 60 * 1000;
 

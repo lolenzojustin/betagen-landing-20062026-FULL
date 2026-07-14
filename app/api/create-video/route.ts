@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 const CREATE_VIDEO_SYSTEM_ERROR =
   "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const VIDEO_START_COOLDOWN_MESSAGE =
-  "Hệ thống vừa nhận một lượt tạo video. Vui lòng thử lại sau khoảng 1 phút.";
+  "Hệ thống đang tạo video cho một khách khác. Bạn vui lòng chờ khoảng 1 phút rồi bấm tạo lại nhé.";
 
 interface CreateVideoRequestBody {
   image_url?: unknown;

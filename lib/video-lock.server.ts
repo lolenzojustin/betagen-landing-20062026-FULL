@@ -1,5 +1,5 @@
 const LOCK_KEY = "betagen:video-generation-lock";
-const START_COOLDOWN_SECONDS = 60;
+const START_COOLDOWN_SECONDS = 90;
 
 type RedisCommandResult = {
   result?: unknown;
