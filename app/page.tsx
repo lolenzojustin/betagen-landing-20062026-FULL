@@ -31,7 +31,7 @@ import {
 } from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
-const POLLING_INTERVAL_MS = 10_000;
+const POLLING_INTERVAL_MS = 15_000;
 const MAX_POLLING_ATTEMPTS = 120;
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const VIDEO_START_COOLDOWN_MESSAGE =
