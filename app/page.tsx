@@ -33,9 +33,9 @@ import {
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 10_000;
 const MAX_POLLING_ATTEMPTS = 120;
-const VIDEO_BUSY_MESSAGE =
-  "Đang có người tạo video, xin vui lòng đợi và thử lại.";
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
+const VIDEO_START_COOLDOWN_MESSAGE =
+  "Hệ thống vừa nhận một lượt tạo video. Vui lòng thử lại sau khoảng 1 phút.";
 const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
 const MAX_STORED_VIDEO_JOB_AGE_MS = 60 * 60 * 1000;
 
@@ -467,7 +467,7 @@ export default function Home() {
       console.error("[Create Video] API error response:", result);
       setErrorMessage(
         result.status === "busy"
-          ? VIDEO_BUSY_MESSAGE
+          ? VIDEO_START_COOLDOWN_MESSAGE
           : result.error || "API tạo task thành công nhưng chưa trả về request_id."
       );
       setIsLoading(false);

@@ -10,6 +10,8 @@ import { pollVideoResultInBackground } from "@/lib/video-result.server";
 export const runtime = "nodejs";
 const CREATE_VIDEO_SYSTEM_ERROR =
   "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
+const VIDEO_START_COOLDOWN_MESSAGE =
+  "Hệ thống vừa nhận một lượt tạo video. Vui lòng thử lại sau khoảng 1 phút.";
 
 interface CreateVideoRequestBody {
   image_url?: unknown;
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           status: "busy",
-          error: "Đang có người tạo video, xin vui lòng chờ đợi và thử lại.",
+          error: VIDEO_START_COOLDOWN_MESSAGE,
         },
         { status: 409 }
       );
@@ -114,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     if (!n8nResponse.ok) {
       if (lockOwnerId) {
-        await releaseVideoLock(lockOwnerId);
+        await releaseVideoLock(lockOwnerId, { clearCooldown: true });
         lockOwnerId = undefined;
       }
 
@@ -155,7 +157,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (lockOwnerId) {
-      await releaseVideoLock(lockOwnerId);
+      await releaseVideoLock(lockOwnerId, { clearCooldown: true });
       lockOwnerId = undefined;
     }
 
@@ -164,7 +166,7 @@ export async function POST(req: NextRequest) {
     console.error("Error creating video task:", error);
 
     if (lockOwnerId) {
-      await releaseVideoLock(lockOwnerId);
+      await releaseVideoLock(lockOwnerId, { clearCooldown: true });
     }
 
     return NextResponse.json(

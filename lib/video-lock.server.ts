@@ -1,5 +1,5 @@
 const LOCK_KEY = "betagen:video-generation-lock";
-const LOCK_TTL_SECONDS = 10 * 60;
+const START_COOLDOWN_SECONDS = 60;
 
 type RedisCommandResult = {
   result?: unknown;
@@ -9,6 +9,10 @@ type RedisCommandResult = {
 type LocalLock = {
   ownerId: string;
   expiresAt: number;
+};
+
+type ReleaseVideoLockOptions = {
+  clearCooldown?: boolean;
 };
 
 const globalForVideoLock = globalThis as typeof globalThis & {
@@ -83,7 +87,7 @@ export async function acquireVideoLock() {
 
     globalForVideoLock.__betagenVideoLock = {
       ownerId,
-      expiresAt: Date.now() + LOCK_TTL_SECONDS * 1000,
+      expiresAt: Date.now() + START_COOLDOWN_SECONDS * 1000,
     };
 
     return { acquired: true as const, ownerId };
@@ -94,7 +98,7 @@ export async function acquireVideoLock() {
     LOCK_KEY,
     ownerId,
     "EX",
-    LOCK_TTL_SECONDS,
+    START_COOLDOWN_SECONDS,
     "NX",
   ]);
 
@@ -106,31 +110,22 @@ export async function acquireVideoLock() {
 export async function refreshVideoLock(ownerId: string) {
   if (shouldUseLocalLock()) {
     pruneLocalLock();
-
-    if (globalForVideoLock.__betagenVideoLock?.ownerId === ownerId) {
-      globalForVideoLock.__betagenVideoLock.expiresAt =
-        Date.now() + LOCK_TTL_SECONDS * 1000;
-      return true;
-    }
-
-    return false;
+    return globalForVideoLock.__betagenVideoLock?.ownerId === ownerId;
   }
 
-  const result = await redisCommand([
-    "EVAL",
-    "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('EXPIRE', KEYS[1], ARGV[2]) else return 0 end",
-    1,
-    LOCK_KEY,
-    ownerId,
-    LOCK_TTL_SECONDS,
-  ]);
-
-  return result === 1;
+  return true;
 }
 
-export async function releaseVideoLock(ownerId: string) {
+export async function releaseVideoLock(
+  ownerId: string,
+  options: ReleaseVideoLockOptions = {}
+) {
   if (shouldUseLocalLock()) {
     pruneLocalLock();
+
+    if (!options.clearCooldown) {
+      return true;
+    }
 
     if (globalForVideoLock.__betagenVideoLock?.ownerId === ownerId) {
       globalForVideoLock.__betagenVideoLock = undefined;
@@ -138,6 +133,10 @@ export async function releaseVideoLock(ownerId: string) {
     }
 
     return false;
+  }
+
+  if (!options.clearCooldown) {
+    return true;
   }
 
   const result = await redisCommand([
