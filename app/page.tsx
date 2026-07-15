@@ -986,7 +986,7 @@ export default function Home() {
                 ["BƯỚC 2", 'Sau khi có video, bấm chọn "Tải xuống".'],
                 [
                   "BƯỚC 3",
-                  "Đăng video lên Facebook cá nhân, kèm #Betagen #MenTaMeLaBetagen.",
+                  "Đăng video lên Facebook cá nhân, kèm #MenTốtBụng #MenTaMeLaBetagen.",
                 ],
                 [
                   "BƯỚC 4",

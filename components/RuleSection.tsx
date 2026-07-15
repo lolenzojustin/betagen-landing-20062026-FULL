@@ -15,7 +15,7 @@ const rules = [
     text: (
       <>
         Đăng video có sự xuất hiện của bạn lên Facebook cá nhân, kèm{" "}
-        <strong>#Betagen #MenTaMeLaBetagen</strong>
+        <strong>#MenTốtBụng #MenTaMeLaBetagen</strong>
       </>
     ),
   },
