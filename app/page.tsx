@@ -17,7 +17,7 @@ import NoteSection from "@/components/NoteSection";
 import RuleSection from "@/components/RuleSection";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ResultModal from "@/components/ResultModal";
-import { TEMPLATE_VIDEO_URL } from "@/lib/constants";
+import { UPLOAD_PREVIEW_VIDEO_URL } from "@/lib/constants";
 import {
   checkVideo,
   createVideo,
@@ -677,7 +677,7 @@ export default function Home() {
             }}
           >
             <VideoTemplateBox
-              templateVideoUrl={TEMPLATE_VIDEO_URL}
+              templateVideoUrl={UPLOAD_PREVIEW_VIDEO_URL}
               onFileSelected={handleFileSelected}
               onInvalidFile={setErrorMessage}
               previewUrl={selectedImage}
@@ -921,7 +921,7 @@ export default function Home() {
 
           <div className="responsive-video-box">
             <VideoTemplateBox
-              templateVideoUrl={TEMPLATE_VIDEO_URL}
+              templateVideoUrl={UPLOAD_PREVIEW_VIDEO_URL}
               onFileSelected={handleFileSelected}
               onInvalidFile={setErrorMessage}
               previewUrl={selectedImage}
