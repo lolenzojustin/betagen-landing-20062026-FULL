@@ -8,7 +8,7 @@ import {
 import { pollVideoResultInBackground } from "@/lib/video-result.server";
 
 export const runtime = "nodejs";
-export const maxDuration = 900;
+export const maxDuration = 300;
 const CREATE_VIDEO_SYSTEM_ERROR =
   "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const VIDEO_START_COOLDOWN_MESSAGE =
