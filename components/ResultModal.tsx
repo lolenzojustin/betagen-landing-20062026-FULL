@@ -58,8 +58,13 @@ export default function ResultModal({ videoUrl, onClose }: ResultModalProps) {
   const [isPhone] = useState(() => isPhoneDevice());
   const [isApple] = useState(() => isAppleDevice());
   const [saveError, setSaveError] = useState<string | null>(null);
-  const downloadUrl = `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
-  const mobileVideoPageUrl = `/video?url=${encodeURIComponent(videoUrl)}`;
+  const isObjectVideoUrl = videoUrl.startsWith("blob:");
+  const downloadUrl = isObjectVideoUrl
+    ? videoUrl
+    : `/api/download-video?url=${encodeURIComponent(videoUrl)}`;
+  const mobileVideoPageUrl = isObjectVideoUrl
+    ? videoUrl
+    : `/video?url=${encodeURIComponent(videoUrl)}`;
   const fileName = getVideoFileName(videoUrl);
 
   const fallbackDownload = () => {

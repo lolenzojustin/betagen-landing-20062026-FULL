@@ -21,6 +21,7 @@ import { TEMPLATE_VIDEO_URL } from "@/lib/constants";
 import {
   checkVideo,
   createVideo,
+  mergeVideo,
   releaseVideoLock,
   uploadImageToFreeImage,
   type VideoTaskResponse,
@@ -195,6 +196,7 @@ export default function Home() {
   const responsivePrizeSectionRef = useRef<HTMLElement>(null);
   const responsiveNoteSectionRef = useRef<HTMLDivElement>(null);
   const pollingAbortRef = useRef<AbortController | null>(null);
+  const resultVideoObjectUrlRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -215,16 +217,28 @@ export default function Home() {
     }
   }, []);
 
+  const clearResultVideoUrl = useCallback(() => {
+    if (resultVideoObjectUrlRef.current) {
+      URL.revokeObjectURL(resultVideoObjectUrlRef.current);
+      resultVideoObjectUrlRef.current = null;
+    }
+
+    setResultVideoUrl(null);
+  }, []);
+
   useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+    return () => {
+      stopPolling();
+      clearResultVideoUrl();
+    };
+  }, [clearResultVideoUrl, stopPolling]);
 
   const handleFileSelected = useCallback(
     (file: File) => {
       stopPolling();
       requestIdRef.current += 1;
       setIsLoading(false);
-      setResultVideoUrl(null);
+      clearResultVideoUrl();
       setSelectedFile(file);
       setErrorMessage(null);
       setSuccessMessage(null);
@@ -235,7 +249,7 @@ export default function Home() {
         return URL.createObjectURL(file);
       });
     },
-    [stopPolling]
+    [clearResultVideoUrl, stopPolling]
   );
 
   const handleUploadFile = useCallback(
@@ -286,26 +300,50 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleVideoCheckResult = useCallback((result: VideoTaskResponse) => {
-    const status = getVideoResultStatus(result);
+  const handleVideoCheckResult = useCallback(
+    async (result: VideoTaskResponse, signal?: AbortSignal) => {
+      const status = getVideoResultStatus(result);
 
-    if (isVideoResultCompleted(result) && result.video_url) {
-      clearStoredVideoJob();
-      setResultVideoUrl(result.video_url);
-      setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
-      return true;
-    }
+      if (isVideoResultCompleted(result) && result.video_url) {
+        clearStoredVideoJob();
 
-    if (status === "ERROR" || status === "TIMEOUT") {
-      clearStoredVideoJob();
-      setErrorMessage(
-        result.error || "Không thể tạo video. Vui lòng thử lại."
-      );
-      return true;
-    }
+        try {
+          const mergedVideoBlob = await mergeVideo(result.video_url, signal);
+          const mergedVideoUrl = URL.createObjectURL(mergedVideoBlob);
 
-    return false;
-  }, []);
+          if (resultVideoObjectUrlRef.current) {
+            URL.revokeObjectURL(resultVideoObjectUrlRef.current);
+          }
+
+          resultVideoObjectUrlRef.current = mergedVideoUrl;
+          setResultVideoUrl(mergedVideoUrl);
+          setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
+        } catch (error) {
+          if (signal?.aborted) {
+            return true;
+          }
+
+          console.error("[Merge Video] Unable to prepare final video:", error);
+          setErrorMessage(
+            "Không thể chuẩn bị video kết quả. Vui lòng thử lại."
+          );
+        }
+
+        return true;
+      }
+
+      if (status === "ERROR" || status === "TIMEOUT") {
+        clearStoredVideoJob();
+        setErrorMessage(
+          result.error || "Không thể tạo video. Vui lòng thử lại."
+        );
+        return true;
+      }
+
+      return false;
+    },
+    []
+  );
 
   const pollVideoResult = useCallback(async (initialJob: ActiveVideoJob) => {
     stopPolling();
@@ -327,7 +365,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (handleVideoCheckResult(finalResult)) {
+            if (await handleVideoCheckResult(finalResult, controller.signal)) {
               return;
             }
           } catch (error) {
@@ -359,7 +397,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (handleVideoCheckResult(finalResult)) {
+            if (await handleVideoCheckResult(finalResult, controller.signal)) {
               return;
             }
           } catch (error) {
@@ -399,25 +437,7 @@ export default function Home() {
           continue;
         }
 
-        const status =
-          typeof result.status === "string" ? result.status.toUpperCase() : "";
-
-        const isCompleted =
-          Boolean(result.video_url) &&
-          (!status || ["COMPLETED", "SUCCESS", "DONE"].includes(status));
-
-        if (isCompleted && result.video_url) {
-          clearStoredVideoJob();
-          setResultVideoUrl(result.video_url);
-          setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
-          return;
-        }
-
-        if (status === "ERROR" || status === "TIMEOUT") {
-          clearStoredVideoJob();
-          setErrorMessage(
-            result.error || "Không thể tạo video. Vui lòng thử lại."
-          );
+        if (await handleVideoCheckResult(result, controller.signal)) {
           return;
         }
 
@@ -481,7 +501,7 @@ export default function Home() {
       saveStoredVideoJob(jobToResume);
       requestIdRef.current += 1;
       setIsLoading(true);
-      setResultVideoUrl(null);
+      clearResultVideoUrl();
       setErrorMessage(null);
       setSuccessMessage(null);
       void pollVideoResult(jobToResume);
@@ -503,7 +523,7 @@ export default function Home() {
       window.removeEventListener("focus", resumeStoredVideoJob);
       window.removeEventListener("pageshow", resumeStoredVideoJob);
     };
-  }, [pollVideoResult]);
+  }, [clearResultVideoUrl, pollVideoResult]);
 
   const handleCreateVideo = async () => {
     if (!selectedFile || isLoading) return;
@@ -513,7 +533,7 @@ export default function Home() {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     setIsLoading(true);
-    setResultVideoUrl(null);
+    clearResultVideoUrl();
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -591,7 +611,7 @@ export default function Home() {
   };
 
   const handleCloseResult = () => {
-    setResultVideoUrl(null);
+    clearResultVideoUrl();
   };
 
   useEffect(() => {
