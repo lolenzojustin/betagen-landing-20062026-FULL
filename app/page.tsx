@@ -33,7 +33,7 @@ import {
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 15_000;
 const MAX_POLLING_ATTEMPTS = 120;
-const MAX_VIDEO_WAIT_MS = 12 * 60 * 1000;
+const MAX_VIDEO_WAIT_MS = 15 * 60 * 1000;
 const VIDEO_TIMEOUT_MESSAGE =
   "Video đang xử lý lâu hơn dự kiến. Bạn vui lòng thử lại sau.";
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
