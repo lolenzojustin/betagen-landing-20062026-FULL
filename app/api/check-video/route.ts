@@ -53,28 +53,18 @@ export async function GET(req: NextRequest) {
     const n8nData = await checkN8nVideoStatus(taskId);
     const normalizedResult = normalizeN8nResponse(n8nData);
     const responseResult = isRecord(normalizedResult)
-      ? (() => {
-          const normalizedVideoUrl =
-            typeof normalizedResult.video_url === "string"
-              ? normalizedResult.video_url
-              : undefined;
-          const normalizedStatus =
+      ? ({
+          ...normalizedResult,
+          success: normalizedResult.success !== false,
+          task_id: taskId,
+          ...(lockId ? { lock_id: lockId } : {}),
+          status:
             typeof normalizedResult.status === "string"
               ? normalizedResult.status.toUpperCase()
-              : normalizedVideoUrl
-                ? "COMPLETED"
-                : "PROCESSING";
-
-          return {
-            ...normalizedResult,
-            success: normalizedResult.success !== false,
-            task_id: taskId,
-            ...(lockId ? { lock_id: lockId } : {}),
-            status: normalizedStatus,
-            updated_at: Date.now(),
-            n8n_response: n8nData,
-          } satisfies StoredVideoResult;
-        })()
+              : "PROCESSING",
+          updated_at: Date.now(),
+          n8n_response: n8nData,
+        } satisfies StoredVideoResult)
       : normalizedResult;
 
     if (isRecord(responseResult)) {

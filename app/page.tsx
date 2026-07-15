@@ -215,23 +215,16 @@ export default function Home() {
     }
   }, []);
 
-  const clearResultVideoUrl = useCallback(() => {
-    setResultVideoUrl(null);
-  }, []);
-
   useEffect(() => {
-    return () => {
-      stopPolling();
-      clearResultVideoUrl();
-    };
-  }, [clearResultVideoUrl, stopPolling]);
+    return () => stopPolling();
+  }, [stopPolling]);
 
   const handleFileSelected = useCallback(
     (file: File) => {
       stopPolling();
       requestIdRef.current += 1;
       setIsLoading(false);
-      clearResultVideoUrl();
+      setResultVideoUrl(null);
       setSelectedFile(file);
       setErrorMessage(null);
       setSuccessMessage(null);
@@ -242,7 +235,7 @@ export default function Home() {
         return URL.createObjectURL(file);
       });
     },
-    [clearResultVideoUrl, stopPolling]
+    [stopPolling]
   );
 
   const handleUploadFile = useCallback(
@@ -293,29 +286,26 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleVideoCheckResult = useCallback(
-    async (result: VideoTaskResponse) => {
-      const status = getVideoResultStatus(result);
+  const handleVideoCheckResult = useCallback((result: VideoTaskResponse) => {
+    const status = getVideoResultStatus(result);
 
-      if (isVideoResultCompleted(result) && result.video_url) {
-        clearStoredVideoJob();
-        setResultVideoUrl(result.video_url);
-        setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
-        return true;
-      }
+    if (isVideoResultCompleted(result) && result.video_url) {
+      clearStoredVideoJob();
+      setResultVideoUrl(result.video_url);
+      setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
+      return true;
+    }
 
-      if (status === "ERROR" || status === "TIMEOUT") {
-        clearStoredVideoJob();
-        setErrorMessage(
-          result.error || "Không thể tạo video. Vui lòng thử lại."
-        );
-        return true;
-      }
+    if (status === "ERROR" || status === "TIMEOUT") {
+      clearStoredVideoJob();
+      setErrorMessage(
+        result.error || "Không thể tạo video. Vui lòng thử lại."
+      );
+      return true;
+    }
 
-      return false;
-    },
-    []
-  );
+    return false;
+  }, []);
 
   const pollVideoResult = useCallback(async (initialJob: ActiveVideoJob) => {
     stopPolling();
@@ -337,7 +327,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (await handleVideoCheckResult(finalResult)) {
+            if (handleVideoCheckResult(finalResult)) {
               return;
             }
           } catch (error) {
@@ -369,7 +359,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (await handleVideoCheckResult(finalResult)) {
+            if (handleVideoCheckResult(finalResult)) {
               return;
             }
           } catch (error) {
@@ -409,7 +399,25 @@ export default function Home() {
           continue;
         }
 
-        if (await handleVideoCheckResult(result)) {
+        const status =
+          typeof result.status === "string" ? result.status.toUpperCase() : "";
+
+        const isCompleted =
+          Boolean(result.video_url) &&
+          (!status || ["COMPLETED", "SUCCESS", "DONE"].includes(status));
+
+        if (isCompleted && result.video_url) {
+          clearStoredVideoJob();
+          setResultVideoUrl(result.video_url);
+          setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
+          return;
+        }
+
+        if (status === "ERROR" || status === "TIMEOUT") {
+          clearStoredVideoJob();
+          setErrorMessage(
+            result.error || "Không thể tạo video. Vui lòng thử lại."
+          );
           return;
         }
 
@@ -473,7 +481,7 @@ export default function Home() {
       saveStoredVideoJob(jobToResume);
       requestIdRef.current += 1;
       setIsLoading(true);
-      clearResultVideoUrl();
+      setResultVideoUrl(null);
       setErrorMessage(null);
       setSuccessMessage(null);
       void pollVideoResult(jobToResume);
@@ -495,7 +503,7 @@ export default function Home() {
       window.removeEventListener("focus", resumeStoredVideoJob);
       window.removeEventListener("pageshow", resumeStoredVideoJob);
     };
-  }, [clearResultVideoUrl, pollVideoResult]);
+  }, [pollVideoResult]);
 
   const handleCreateVideo = async () => {
     if (!selectedFile || isLoading) return;
@@ -505,7 +513,7 @@ export default function Home() {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     setIsLoading(true);
-    clearResultVideoUrl();
+    setResultVideoUrl(null);
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -583,7 +591,7 @@ export default function Home() {
   };
 
   const handleCloseResult = () => {
-    clearResultVideoUrl();
+    setResultVideoUrl(null);
   };
 
   useEffect(() => {
@@ -889,7 +897,7 @@ export default function Home() {
               thành diễn viên, đồng hành cùng bộ đôi tốt bụng Quang Hùng
               MasterD và Khoai Lang Thang!
               <span>
-                Thời gian diễn ra: Từ 15/07 - 22/07/2026.
+                Thời gian diễn ra: Từ 01/07 - 15/07/2026.
               </span>
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
