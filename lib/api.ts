@@ -102,27 +102,6 @@ export async function checkVideo(
   return res.json();
 }
 
-export async function mergeVideo(
-  videoUrl: string,
-  signal?: AbortSignal
-): Promise<Blob> {
-  const res = await fetch("/api/merge-video", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ video_url: videoUrl }),
-    cache: "no-store",
-    signal,
-  });
-
-  if (!res.ok) {
-    throw new Error("Unable to merge video.");
-  }
-
-  return res.blob();
-}
-
 export async function releaseVideoLock(lockId: string) {
   await fetch("/api/video-lock/release", {
     method: "POST",

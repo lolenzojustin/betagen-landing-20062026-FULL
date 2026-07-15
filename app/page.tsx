@@ -21,7 +21,6 @@ import { TEMPLATE_VIDEO_URL } from "@/lib/constants";
 import {
   checkVideo,
   createVideo,
-  mergeVideo,
   releaseVideoLock,
   uploadImageToFreeImage,
   type VideoTaskResponse,
@@ -196,7 +195,6 @@ export default function Home() {
   const responsivePrizeSectionRef = useRef<HTMLElement>(null);
   const responsiveNoteSectionRef = useRef<HTMLDivElement>(null);
   const pollingAbortRef = useRef<AbortController | null>(null);
-  const resultVideoObjectUrlRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -218,11 +216,6 @@ export default function Home() {
   }, []);
 
   const clearResultVideoUrl = useCallback(() => {
-    if (resultVideoObjectUrlRef.current) {
-      URL.revokeObjectURL(resultVideoObjectUrlRef.current);
-      resultVideoObjectUrlRef.current = null;
-    }
-
     setResultVideoUrl(null);
   }, []);
 
@@ -301,34 +294,13 @@ export default function Home() {
   };
 
   const handleVideoCheckResult = useCallback(
-    async (result: VideoTaskResponse, signal?: AbortSignal) => {
+    async (result: VideoTaskResponse) => {
       const status = getVideoResultStatus(result);
 
       if (isVideoResultCompleted(result) && result.video_url) {
         clearStoredVideoJob();
-
-        try {
-          const mergedVideoBlob = await mergeVideo(result.video_url, signal);
-          const mergedVideoUrl = URL.createObjectURL(mergedVideoBlob);
-
-          if (resultVideoObjectUrlRef.current) {
-            URL.revokeObjectURL(resultVideoObjectUrlRef.current);
-          }
-
-          resultVideoObjectUrlRef.current = mergedVideoUrl;
-          setResultVideoUrl(mergedVideoUrl);
-          setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
-        } catch (error) {
-          if (signal?.aborted) {
-            return true;
-          }
-
-          console.error("[Merge Video] Unable to prepare final video:", error);
-          setErrorMessage(
-            "Không thể chuẩn bị video kết quả. Vui lòng thử lại."
-          );
-        }
-
+        setResultVideoUrl(result.video_url);
+        setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
         return true;
       }
 
@@ -365,7 +337,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (await handleVideoCheckResult(finalResult, controller.signal)) {
+            if (await handleVideoCheckResult(finalResult)) {
               return;
             }
           } catch (error) {
@@ -397,7 +369,7 @@ export default function Home() {
               controller.signal
             );
 
-            if (await handleVideoCheckResult(finalResult, controller.signal)) {
+            if (await handleVideoCheckResult(finalResult)) {
               return;
             }
           } catch (error) {
@@ -437,7 +409,7 @@ export default function Home() {
           continue;
         }
 
-        if (await handleVideoCheckResult(result, controller.signal)) {
+        if (await handleVideoCheckResult(result)) {
           return;
         }
 
@@ -917,7 +889,7 @@ export default function Home() {
               thành diễn viên, đồng hành cùng bộ đôi tốt bụng Quang Hùng
               MasterD và Khoai Lang Thang!
               <span>
-                Thời gian diễn ra: Từ 01/07 - 15/07/2026.
+                Thời gian diễn ra: Từ 15/07 - 22/07/2026.
               </span>
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
