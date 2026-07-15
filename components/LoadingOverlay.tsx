@@ -8,7 +8,7 @@ export default function LoadingOverlay() {
         <div className="absolute inset-2 animate-spin rounded-full border-4 border-white/20 border-t-[#84D9FB]" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
       </div>
       <p className="px-6 text-center text-lg font-bold text-white">
-        Đang tạo video, xin vui lòng chờ từ 2 đến 5 phút
+        Đang tạo video, xin vui lòng chờ từ 3 phút đến 6 phút
       </p>
     </div>
   );
