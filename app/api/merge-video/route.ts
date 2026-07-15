@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import ffmpegPath from "ffmpeg-static";
 
@@ -11,8 +13,8 @@ export const maxDuration = 300;
 
 const OUTRO_VIDEO_URL =
   "https://pub-1952482ddc0e4ce780169f9161b582bb.r2.dev/videopublic/new%20-2.mp4";
-const DOWNLOAD_TIMEOUT_MS = 90_000;
-const FFMPEG_TIMEOUT_MS = 240_000;
+const DOWNLOAD_TIMEOUT_MS = 60_000;
+const FFMPEG_TIMEOUT_MS = 210_000;
 
 type MergeVideoRequestBody = {
   video_url?: unknown;
@@ -140,30 +142,71 @@ async function mergeVideos({
       "[Merge Video] Stream copy failed, retrying with encode:",
       copyError
     );
-    await runFfmpeg([
-      "-f",
-      "concat",
-      "-safe",
-      "0",
-      "-i",
-      listPath,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "23",
-      "-pix_fmt",
-      "yuv420p",
-      "-c:a",
-      "aac",
-      "-b:a",
-      "128k",
-      "-movflags",
-      "+faststart",
-      "-y",
-      outputPath,
-    ]);
+
+    try {
+      await runFfmpeg([
+        "-i",
+        firstVideoPath,
+        "-i",
+        secondVideoPath,
+        "-filter_complex",
+        [
+          "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v0]",
+          "[1:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v1]",
+          "[0:a]aformat=sample_rates=44100:channel_layouts=stereo[a0]",
+          "[1:a]aformat=sample_rates=44100:channel_layouts=stereo[a1]",
+          "[v0][a0][v1][a1]concat=n=2:v=1:a=1[outv][outa]",
+        ].join(";"),
+        "-map",
+        "[outv]",
+        "-map",
+        "[outa]",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "+faststart",
+        "-y",
+        outputPath,
+      ]);
+    } catch (audioEncodeError) {
+      console.warn(
+        "[Merge Video] Audio concat failed, retrying video-only encode:",
+        audioEncodeError
+      );
+      await runFfmpeg([
+        "-i",
+        firstVideoPath,
+        "-i",
+        secondVideoPath,
+        "-filter_complex",
+        [
+          "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v0]",
+          "[1:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v1]",
+          "[v0][v1]concat=n=2:v=1:a=0[outv]",
+        ].join(";"),
+        "-map",
+        "[outv]",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-movflags",
+        "+faststart",
+        "-y",
+        outputPath,
+      ]);
+    }
   }
 }
 
@@ -209,9 +252,21 @@ export async function POST(req: NextRequest) {
       outputPath,
     });
 
-    const mergedVideo = await readFile(outputPath);
+    await stat(outputPath);
 
-    return new Response(mergedVideo, {
+    const outputStream = createReadStream(outputPath);
+    const streamTempDir = tempDir;
+    const cleanup = () => {
+      rm(streamTempDir, { recursive: true, force: true }).catch((cleanupError) => {
+        console.warn("[Merge Video] Unable to clean temp files:", cleanupError);
+      });
+    };
+
+    outputStream.on("close", cleanup);
+    outputStream.on("error", cleanup);
+    tempDir = "";
+
+    return new Response(Readable.toWeb(outputStream) as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": "video/mp4",
