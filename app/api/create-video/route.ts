@@ -139,10 +139,13 @@ export async function POST(req: NextRequest) {
       const requestId = getOptionalString(createVideoResult.request_id);
 
       if (requestId) {
+        const origin = req.nextUrl.origin;
+
         after(async () => {
           await pollVideoResultInBackground({
             taskId: requestId,
             lockId: lockOwnerId,
+            origin,
           });
         });
 

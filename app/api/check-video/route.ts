@@ -52,6 +52,9 @@ export async function GET(req: NextRequest) {
 
     const n8nData = await checkN8nVideoStatus(taskId);
     const normalizedResult = normalizeN8nResponse(n8nData);
+    const normalizedVideoUrl = isRecord(normalizedResult)
+      ? normalizedResult.video_url
+      : undefined;
     const responseResult = isRecord(normalizedResult)
       ? ({
           ...normalizedResult,
@@ -61,7 +64,9 @@ export async function GET(req: NextRequest) {
           status:
             typeof normalizedResult.status === "string"
               ? normalizedResult.status.toUpperCase()
-              : "PROCESSING",
+              : typeof normalizedVideoUrl === "string"
+                ? "COMPLETED"
+                : "PROCESSING",
           updated_at: Date.now(),
           n8n_response: n8nData,
         } satisfies StoredVideoResult)

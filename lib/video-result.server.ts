@@ -4,7 +4,7 @@ const VIDEO_RESULT_KEY_PREFIX = "betagen:video-result:";
 const VIDEO_RESULT_TTL_SECONDS = 60 * 60;
 const BACKGROUND_INITIAL_DELAY_MS = 30_000;
 const BACKGROUND_POLL_INTERVAL_MS = 15_000;
-const BACKGROUND_MAX_ATTEMPTS = 58;
+const BACKGROUND_MAX_WAIT_MS = 15 * 60 * 1000;
 
 type RedisCommandResult = {
   result?: unknown;
@@ -94,7 +94,10 @@ function getOptionalString(value: unknown) {
 }
 
 function getNestedVideoUrl(value: Record<string, unknown>) {
-  const videoUrl = getOptionalString(value.video_url);
+  const videoUrl =
+    getOptionalString(value.video_url) ||
+    getOptionalString(value.videoUrl) ||
+    getOptionalString(value.url);
   if (videoUrl) {
     return videoUrl;
   }
@@ -104,7 +107,11 @@ function getNestedVideoUrl(value: Record<string, unknown>) {
     return undefined;
   }
 
-  return getOptionalString(video.url);
+  return (
+    getOptionalString(video.url) ||
+    getOptionalString(video.video_url) ||
+    getOptionalString(video.videoUrl)
+  );
 }
 
 function normalizeStatus(value: unknown) {
@@ -141,8 +148,9 @@ function toStoredVideoResult(
 ): StoredVideoResult {
   const normalized = normalizeN8nResponse(result);
   const base = isRecord(normalized) ? normalized : {};
-  const status = normalizeStatus(base.status) || "PROCESSING";
   const videoUrl = getOptionalString(base.video_url);
+  const status =
+    normalizeStatus(base.status) || (videoUrl ? "COMPLETED" : "PROCESSING");
 
   return {
     ...base,
@@ -277,12 +285,99 @@ function wait(ms: number) {
   });
 }
 
+export type VideoPollingJob = {
+  taskId: string;
+  lockId?: string;
+  origin: string;
+  createdAt: number;
+  attempts: number;
+  delayMs: number;
+};
+
+async function saveVideoPollingTimeout(taskId: string, lockId?: string) {
+  await saveStoredVideoResult({
+    success: false,
+    task_id: taskId,
+    ...(lockId ? { lock_id: lockId } : {}),
+    status: "TIMEOUT",
+    error:
+      "Video \u0111ang x\u1eed l\u00fd l\u00e2u h\u01a1n d\u1ef1 ki\u1ebfn. B\u1ea1n vui l\u00f2ng th\u1eed l\u1ea1i sau.",
+    updated_at: Date.now(),
+  });
+
+  if (lockId) {
+    await releaseVideoLock(lockId);
+  }
+}
+
+async function scheduleNextVideoPolling(job: VideoPollingJob) {
+  const response = await fetch(new URL("/api/video-worker/check", job.origin), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      task_id: job.taskId,
+      lock_id: job.lockId,
+      created_at: job.createdAt,
+      attempts: job.attempts,
+      delay_ms: job.delayMs,
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to schedule the next video polling step.");
+  }
+}
+
+export async function runVideoPollingStep(job: VideoPollingJob) {
+  const deadline = job.createdAt + BACKGROUND_MAX_WAIT_MS;
+  const remainingWaitMs = deadline - Date.now();
+
+  if (remainingWaitMs <= 0) {
+    await saveVideoPollingTimeout(job.taskId, job.lockId);
+    return;
+  }
+
+  await wait(Math.min(job.delayMs, remainingWaitMs));
+
+  try {
+    const n8nData = await checkN8nVideoStatus(job.taskId);
+    const storedResult = toStoredVideoResult(job.taskId, n8nData, job.lockId);
+
+    await saveStoredVideoResult(storedResult);
+
+    if (isTerminalVideoResult(storedResult)) {
+      if (job.lockId) {
+        await releaseVideoLock(job.lockId);
+      }
+      return;
+    }
+  } catch (error) {
+    console.warn("[Background Video Poll] Retrying after error:", error);
+  }
+
+  if (Date.now() >= deadline) {
+    await saveVideoPollingTimeout(job.taskId, job.lockId);
+    return;
+  }
+
+  await scheduleNextVideoPolling({
+    ...job,
+    attempts: job.attempts + 1,
+    delayMs: BACKGROUND_POLL_INTERVAL_MS,
+  });
+}
+
 export async function pollVideoResultInBackground({
   taskId,
   lockId,
+  origin,
 }: {
   taskId: string;
   lockId?: string;
+  origin: string;
 }) {
   await saveStoredVideoResult({
     success: true,
@@ -292,38 +387,12 @@ export async function pollVideoResultInBackground({
     updated_at: Date.now(),
   });
 
-  await wait(BACKGROUND_INITIAL_DELAY_MS);
-
-  for (let attempt = 0; attempt < BACKGROUND_MAX_ATTEMPTS; attempt += 1) {
-    try {
-      const n8nData = await checkN8nVideoStatus(taskId);
-      const storedResult = toStoredVideoResult(taskId, n8nData, lockId);
-
-      await saveStoredVideoResult(storedResult);
-
-      if (isTerminalVideoResult(storedResult)) {
-        if (lockId) {
-          await releaseVideoLock(lockId);
-        }
-        return;
-      }
-    } catch (error) {
-      console.warn("[Background Video Poll] Retrying after error:", error);
-    }
-
-    await wait(BACKGROUND_POLL_INTERVAL_MS);
-  }
-
-  await saveStoredVideoResult({
-    success: false,
-    task_id: taskId,
-    ...(lockId ? { lock_id: lockId } : {}),
-    status: "TIMEOUT",
-    error: "Video đang xử lý lâu hơn dự kiến. Bạn vui lòng thử lại sau.",
-    updated_at: Date.now(),
+  await runVideoPollingStep({
+    taskId,
+    lockId,
+    origin,
+    createdAt: Date.now(),
+    attempts: 0,
+    delayMs: BACKGROUND_INITIAL_DELAY_MS,
   });
-
-  if (lockId) {
-    await releaseVideoLock(lockId);
-  }
 }
