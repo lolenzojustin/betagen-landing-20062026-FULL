@@ -105,7 +105,7 @@ export default function HeroSection({
             và Khoai Lang Thang!
             <br />
             <span className="mt-2 inline-block font-semibold">
-              Thời gian diễn ra: Từ 01/07 - 15/07/2026.
+              Thời gian diễn ra: Từ 15/07 - 22/07/2026.
             </span>
           </p>
 

@@ -897,7 +897,7 @@ export default function Home() {
               thành diễn viên, đồng hành cùng bộ đôi tốt bụng Quang Hùng
               MasterD và Khoai Lang Thang!
               <span>
-                Thời gian diễn ra: Từ 01/07 - 15/07/2026.
+                Thời gian diễn ra: Từ 15/07 - 22/07/2026.
               </span>
             </p>
             <button onClick={scrollToVideo}>TẠO VIDEO NGAY</button>
