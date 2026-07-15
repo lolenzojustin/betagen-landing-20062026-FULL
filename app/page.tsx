@@ -33,11 +33,13 @@ import {
 const INITIAL_POLLING_DELAY_MS = 100_000;
 const POLLING_INTERVAL_MS = 15_000;
 const MAX_POLLING_ATTEMPTS = 120;
+const MAX_VIDEO_WAIT_MS = 12 * 60 * 1000;
+const VIDEO_TIMEOUT_MESSAGE =
+  "Video đang xử lý lâu hơn dự kiến. Bạn vui lòng thử lại sau.";
 const SYSTEM_UPGRADE_MESSAGE = "Hệ thống đang nâng cấp, xin vui lòng thử lại sau";
 const VIDEO_START_COOLDOWN_MESSAGE =
   "Hệ thống đang tạo video cho một khách khác. Bạn vui lòng chờ khoảng 1 phút rồi bấm tạo lại nhé.";
 const ACTIVE_VIDEO_JOB_STORAGE_KEY = "betagen:active-video-job";
-const MAX_STORED_VIDEO_JOB_AGE_MS = 60 * 60 * 1000;
 
 type ActiveVideoJob = {
   taskId: string;
@@ -94,7 +96,6 @@ function readStoredVideoJob() {
     }
 
     if (
-      Date.now() - job.createdAt > MAX_STORED_VIDEO_JOB_AGE_MS ||
       job.attempts >= MAX_POLLING_ATTEMPTS
     ) {
       window.localStorage.removeItem(ACTIVE_VIDEO_JOB_STORAGE_KEY);
@@ -136,6 +137,10 @@ function createActiveVideoJob(taskId: string, lockId?: string): ActiveVideoJob {
     nextCheckAt: now + INITIAL_POLLING_DELAY_MS,
     attempts: 0,
   };
+}
+
+function getRemainingVideoWaitMs(job: ActiveVideoJob) {
+  return job.createdAt + MAX_VIDEO_WAIT_MS - Date.now();
 }
 
 function StatusMessage({
@@ -277,10 +282,27 @@ export default function Home() {
 
     try {
       while (currentJob.attempts < MAX_POLLING_ATTEMPTS) {
+        const remainingWaitMs = getRemainingVideoWaitMs(currentJob);
+
+        if (remainingWaitMs <= 0) {
+          clearStoredVideoJob();
+          setErrorMessage(VIDEO_TIMEOUT_MESSAGE);
+          return;
+        }
+
         await waitForNextPoll(
-          Math.max(currentJob.nextCheckAt - Date.now(), 0),
+          Math.min(
+            Math.max(currentJob.nextCheckAt - Date.now(), 0),
+            remainingWaitMs
+          ),
           controller.signal
         );
+
+        if (getRemainingVideoWaitMs(currentJob) <= 0) {
+          clearStoredVideoJob();
+          setErrorMessage(VIDEO_TIMEOUT_MESSAGE);
+          return;
+        }
 
         const completedAttempts = currentJob.attempts + 1;
         let result;
@@ -348,7 +370,7 @@ export default function Home() {
       }
 
       clearStoredVideoJob();
-      setErrorMessage("Không tạo được video, vui lòng thử lại sau.");
+      setErrorMessage(VIDEO_TIMEOUT_MESSAGE);
     } catch (error) {
       if (controller.signal.aborted) {
         return;
