@@ -94,7 +94,10 @@ function getOptionalString(value: unknown) {
 }
 
 function getNestedVideoUrl(value: Record<string, unknown>) {
-  const videoUrl = getOptionalString(value.video_url);
+  const videoUrl =
+    getOptionalString(value.video_url) ||
+    getOptionalString(value.videoUrl) ||
+    getOptionalString(value.url);
   if (videoUrl) {
     return videoUrl;
   }
@@ -104,7 +107,11 @@ function getNestedVideoUrl(value: Record<string, unknown>) {
     return undefined;
   }
 
-  return getOptionalString(video.url);
+  return (
+    getOptionalString(video.url) ||
+    getOptionalString(video.video_url) ||
+    getOptionalString(video.videoUrl)
+  );
 }
 
 function normalizeStatus(value: unknown) {
@@ -141,8 +148,9 @@ function toStoredVideoResult(
 ): StoredVideoResult {
   const normalized = normalizeN8nResponse(result);
   const base = isRecord(normalized) ? normalized : {};
-  const status = normalizeStatus(base.status) || "PROCESSING";
   const videoUrl = getOptionalString(base.video_url);
+  const status =
+    normalizeStatus(base.status) || (videoUrl ? "COMPLETED" : "PROCESSING");
 
   return {
     ...base,
