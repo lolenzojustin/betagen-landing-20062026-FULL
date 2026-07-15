@@ -174,7 +174,11 @@ export function isTerminalVideoResult(result: {
 }) {
   const status = normalizeStatus(result.status);
 
-  return isCompletedVideoResult(result) || status === "ERROR";
+  return (
+    isCompletedVideoResult(result) ||
+    status === "ERROR" ||
+    status === "TIMEOUT"
+  );
 }
 
 export async function saveStoredVideoResult(result: StoredVideoResult) {
@@ -315,7 +319,7 @@ export async function pollVideoResultInBackground({
     task_id: taskId,
     ...(lockId ? { lock_id: lockId } : {}),
     status: "TIMEOUT",
-    error: "Video đang xử lý lâu hơn dự kiến. Vui lòng mở lại trang sau ít phút.",
+    error: "Video đang xử lý lâu hơn dự kiến. Bạn vui lòng thử lại sau.",
     updated_at: Date.now(),
   });
 

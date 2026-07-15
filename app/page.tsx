@@ -23,6 +23,7 @@ import {
   createVideo,
   releaseVideoLock,
   uploadImageToFreeImage,
+  type VideoTaskResponse,
 } from "@/lib/api";
 import {
   getImageUploadValidationError,
@@ -141,6 +142,19 @@ function createActiveVideoJob(taskId: string, lockId?: string): ActiveVideoJob {
 
 function getRemainingVideoWaitMs(job: ActiveVideoJob) {
   return job.createdAt + MAX_VIDEO_WAIT_MS - Date.now();
+}
+
+function getVideoResultStatus(result: VideoTaskResponse) {
+  return typeof result.status === "string" ? result.status.toUpperCase() : "";
+}
+
+function isVideoResultCompleted(result: VideoTaskResponse) {
+  const status = getVideoResultStatus(result);
+
+  return Boolean(
+    result.video_url &&
+      (!status || ["COMPLETED", "SUCCESS", "DONE"].includes(status))
+  );
 }
 
 function StatusMessage({
@@ -272,6 +286,27 @@ export default function Home() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const handleVideoCheckResult = useCallback((result: VideoTaskResponse) => {
+    const status = getVideoResultStatus(result);
+
+    if (isVideoResultCompleted(result) && result.video_url) {
+      clearStoredVideoJob();
+      setResultVideoUrl(result.video_url);
+      setSuccessMessage("Video đã tạo xong, bạn có thể tải video.");
+      return true;
+    }
+
+    if (status === "ERROR" || status === "TIMEOUT") {
+      clearStoredVideoJob();
+      setErrorMessage(
+        result.error || "Không thể tạo video. Vui lòng thử lại."
+      );
+      return true;
+    }
+
+    return false;
+  }, []);
+
   const pollVideoResult = useCallback(async (initialJob: ActiveVideoJob) => {
     stopPolling();
     saveStoredVideoJob(initialJob);
@@ -285,6 +320,24 @@ export default function Home() {
         const remainingWaitMs = getRemainingVideoWaitMs(currentJob);
 
         if (remainingWaitMs <= 0) {
+          try {
+            const finalResult = await checkVideo(
+              currentJob.taskId,
+              currentJob.lockId,
+              controller.signal
+            );
+
+            if (handleVideoCheckResult(finalResult)) {
+              return;
+            }
+          } catch (error) {
+            if (controller.signal.aborted) {
+              return;
+            }
+
+            console.warn("[Check Video] Final check failed:", error);
+          }
+
           clearStoredVideoJob();
           setErrorMessage(VIDEO_TIMEOUT_MESSAGE);
           return;
@@ -299,6 +352,24 @@ export default function Home() {
         );
 
         if (getRemainingVideoWaitMs(currentJob) <= 0) {
+          try {
+            const finalResult = await checkVideo(
+              currentJob.taskId,
+              currentJob.lockId,
+              controller.signal
+            );
+
+            if (handleVideoCheckResult(finalResult)) {
+              return;
+            }
+          } catch (error) {
+            if (controller.signal.aborted) {
+              return;
+            }
+
+            console.warn("[Check Video] Final check failed:", error);
+          }
+
           clearStoredVideoJob();
           setErrorMessage(VIDEO_TIMEOUT_MESSAGE);
           return;
@@ -392,7 +463,7 @@ export default function Home() {
         setIsLoading(false);
       }
     }
-  }, [stopPolling]);
+  }, [handleVideoCheckResult, stopPolling]);
 
   useEffect(() => {
     const resumeStoredVideoJob = () => {
@@ -402,12 +473,18 @@ export default function Home() {
         return;
       }
 
+      const jobToResume = {
+        ...storedJob,
+        nextCheckAt: Date.now(),
+      };
+
+      saveStoredVideoJob(jobToResume);
       requestIdRef.current += 1;
       setIsLoading(true);
       setResultVideoUrl(null);
       setErrorMessage(null);
       setSuccessMessage(null);
-      void pollVideoResult(storedJob);
+      void pollVideoResult(jobToResume);
     };
 
     const handleVisibilityChange = () => {
