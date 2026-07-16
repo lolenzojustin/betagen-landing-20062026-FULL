@@ -3,7 +3,7 @@ import { releaseVideoLock } from "@/lib/video-lock.server";
 const VIDEO_RESULT_KEY_PREFIX = "betagen:video-result:";
 const VIDEO_RESULT_TTL_SECONDS = 60 * 60;
 const BACKGROUND_INITIAL_DELAY_MS = 30_000;
-const BACKGROUND_POLL_INTERVAL_MS = 15_000;
+const BACKGROUND_POLL_INTERVAL_MS = 20_000;
 const BACKGROUND_MAX_WAIT_MS = 15 * 60 * 1000;
 
 type RedisCommandResult = {

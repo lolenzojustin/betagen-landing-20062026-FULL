@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const lockId = getOptionalString(body.lock_id);
   const createdAt = getOptionalNumber(body.created_at);
   const attempts = getOptionalNumber(body.attempts) ?? 0;
-  const delayMs = getOptionalNumber(body.delay_ms) ?? 15_000;
+  const delayMs = getOptionalNumber(body.delay_ms) ?? 20_000;
 
   if (!taskId || !createdAt) {
     return NextResponse.json(

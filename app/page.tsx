@@ -32,7 +32,7 @@ import {
 } from "@/lib/image-upload";
 
 const INITIAL_POLLING_DELAY_MS = 100_000;
-const POLLING_INTERVAL_MS = 15_000;
+const POLLING_INTERVAL_MS = 20_000;
 const MAX_POLLING_ATTEMPTS = 120;
 const MAX_VIDEO_WAIT_MS = 15 * 60 * 1000;
 const VIDEO_TIMEOUT_MESSAGE =
